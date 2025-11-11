@@ -6,6 +6,8 @@
 //
 
 import SwiftUI
+import SuperwallKit
+
 
 struct ContentView: View {
     var body: some View {
@@ -15,6 +17,9 @@ struct ContentView: View {
                 .foregroundStyle(.tint)
             Text("Hello, world!")
             Text("WealthIQ Rules")
+            Button("Show Paywall") {
+                Superwall.shared.register(placement: "campaign_trigger")
+            }
         }
         .padding()
     }

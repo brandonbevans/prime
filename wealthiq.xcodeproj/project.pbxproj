@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		60C80DF62EC2857B00090352 /* SuperwallKit in Frameworks */ = {isa = PBXBuildFile; productRef = 60C80DF52EC2857B00090352 /* SuperwallKit */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		60FFAB1E2EC221610044D7C0 /* wealthiq.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = wealthiq.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -36,6 +40,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				60C80DF62EC2857B00090352 /* SuperwallKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -78,6 +83,7 @@
 			);
 			name = wealthiq;
 			packageProductDependencies = (
+				60C80DF52EC2857B00090352 /* SuperwallKit */,
 			);
 			productName = wealthiq;
 			productReference = 60FFAB1E2EC221610044D7C0 /* wealthiq.app */;
@@ -107,6 +113,9 @@
 			);
 			mainGroup = 60FFAB152EC221610044D7C0;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				60C80DF42EC2857A00090352 /* XCRemoteSwiftPackageReference "Superwall-iOS" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 60FFAB1F2EC221610044D7C0 /* Products */;
 			projectDirPath = "";
@@ -271,6 +280,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = wealthiq/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = WealthIQ;
 				INFOPLIST_KEY_NSCameraUsageDescription = "WealthIQ needs camera access to capture photos for your Golden Hour practice reflections.";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "WealthIQ needs microphone access to record audio reflections during your Golden Hour practice.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "";
@@ -279,7 +289,7 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -309,6 +319,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = wealthiq/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = WealthIQ;
 				INFOPLIST_KEY_NSCameraUsageDescription = "WealthIQ needs camera access to capture photos for your Golden Hour practice reflections.";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "WealthIQ needs microphone access to record audio reflections during your Golden Hour practice.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "";
@@ -317,7 +328,7 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -357,6 +368,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		60C80DF42EC2857A00090352 /* XCRemoteSwiftPackageReference "Superwall-iOS" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/superwall/Superwall-iOS";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 4.10.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		60C80DF52EC2857B00090352 /* SuperwallKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 60C80DF42EC2857A00090352 /* XCRemoteSwiftPackageReference "Superwall-iOS" */;
+			productName = SuperwallKit;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 60FFAB162EC221610044D7C0 /* Project object */;
 }
