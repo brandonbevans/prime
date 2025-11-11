@@ -165,7 +165,7 @@ export default function Home() {
                 <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-amber-400/20 text-sm font-semibold text-amber-200">
                   4
                 </span>
-                Design the life you're willing to work for, and actually stay
+                Design the life you&apos;re willing to work for, and actually stay
                 committed to it.
               </li>
             </ul>
@@ -208,7 +208,7 @@ export default function Home() {
               Designed for the way high achievers really grow
             </h2>
             <p className="text-lg text-slate-300">
-              WealthIQ blends mindful reflection with execution muscle. It's the
+              WealthIQ blends mindful reflection with execution muscle. It&apos;s the
               toolkit for ambitious people who want their daily actions to match
               their deepest priorities.
             </p>
