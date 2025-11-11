@@ -1,7 +1,8 @@
 'use client';
 
+import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
-import { FormEvent } from 'react';
+import { FormEvent, useState } from 'react';
 
 const valueProps = [
   {
@@ -47,11 +48,35 @@ const experienceHighlights = [
 export default function Home() {
   const year = new Date().getFullYear();
   const router = useRouter();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setError(null);
+    setIsSubmitting(true);
 
-    router.push('/thank-you');
+    const formData = new FormData(event.currentTarget);
+    const email = formData.get('email') as string;
+
+    try {
+      const { error: insertError } = await supabase
+        .from('waitlist_signups')
+        .insert([{ email }]);
+
+      if (insertError) {
+        throw insertError;
+      }
+
+      router.push('/thank-you');
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Something went wrong. Please try again.'
+      );
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -92,11 +117,15 @@ export default function Home() {
                 />
                 <button
                   type="submit"
-                  className="inline-flex items-center justify-center rounded-full bg-amber-400 px-6 py-3 text-base font-semibold text-slate-950 transition hover:bg-amber-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-200"
+                  disabled={isSubmitting}
+                  className="inline-flex items-center justify-center rounded-full bg-amber-400 px-6 py-3 text-base font-semibold text-slate-950 transition hover:bg-amber-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-200 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  Join the waitlist
+                  {isSubmitting ? 'Joining...' : 'Join the waitlist'}
                 </button>
               </div>
+              {error && (
+                <p className="text-sm text-red-400">{error}</p>
+              )}
               <p className="text-sm text-slate-400">
                 Early supporters on the waitlist receive a complimentary 3-month
                 WealthIQ subscription at launch.
