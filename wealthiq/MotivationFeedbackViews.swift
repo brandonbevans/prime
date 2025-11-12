@@ -83,6 +83,13 @@ struct ProcessDifficultySelectionView: View {
             withAnimation(.easeInOut(duration: 0.2)) {
               viewModel.selectProcessDifficulty(difficulty)
             }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+              if viewModel.currentStep == .processDifficulty {
+                withAnimation {
+                  viewModel.nextStep()
+                }
+              }
+            }
           }
         }
       }

@@ -26,6 +26,14 @@ struct CoachingStyleSelectionView: View {
             withAnimation(.easeInOut(duration: 0.2)) {
               viewModel.selectCoachingStyle(style)
             }
+
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) {
+              if viewModel.currentStep == .coachingStyle {
+                withAnimation {
+                  viewModel.nextStep()
+                }
+              }
+            }
           }
         }
       }

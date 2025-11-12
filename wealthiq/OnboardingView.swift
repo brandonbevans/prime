@@ -26,11 +26,16 @@ struct OnboardingView: View {
 
         Spacer(minLength: 0)
 
-        if viewModel.currentStep != .gender && viewModel.currentStep != .goalRecency {
+        if viewModel.currentStep != .gender
+          && viewModel.currentStep != .goalRecency
+          && viewModel.currentStep != .coachingStyle
+          && viewModel.currentStep != .processDifficulty
+          && viewModel.currentStep != .planCalculation
+        {
           ContinueButtonView(
             title: "Continue",
             isEnabled: viewModel.canContinue
-              && (viewModel.currentStep != .processDifficulty || !hasTriggeredPaywall)
+              && (viewModel.currentStep != .planCalculation || !hasTriggeredPaywall)
           ) {
             handleContinue()
           }
@@ -46,7 +51,7 @@ struct OnboardingView: View {
     .animation(.spring(response: 0.45, dampingFraction: 0.85), value: viewModel.currentStep)
     .animation(.easeInOut(duration: 0.2), value: viewModel.canContinue)
     .onChange(of: viewModel.currentStep) { newStep in
-      if newStep != .processDifficulty {
+      if newStep != .planCalculation {
         hasTriggeredPaywall = false
       }
     }
@@ -103,16 +108,16 @@ struct OnboardingView: View {
       CoachingStyleSelectionView(viewModel: viewModel)
     case .accountability:
       AccountabilityPreferenceSelectionView(viewModel: viewModel)
-    case .commitment:
-      CommitmentInputView(viewModel: viewModel) {
-        handleContinue()
-      }
     case .motivationShift:
       MotivationShiftSelectionView(viewModel: viewModel)
     case .postSessionMood:
       PostSessionMoodSelectionView(viewModel: viewModel)
     case .processDifficulty:
       ProcessDifficultySelectionView(viewModel: viewModel)
+    case .planCalculation:
+      PlanCalculationView(viewModel: viewModel) {
+        showPaywall()
+      }
     }
   }
 
@@ -188,10 +193,6 @@ struct OnboardingView: View {
       withAnimation {
         viewModel.nextStep()
       }
-    case .commitment:
-      withAnimation {
-        viewModel.nextStep()
-      }
     case .motivationShift:
       withAnimation {
         viewModel.nextStep()
@@ -201,6 +202,10 @@ struct OnboardingView: View {
         viewModel.nextStep()
       }
     case .processDifficulty:
+      withAnimation {
+        viewModel.nextStep()
+      }
+    case .planCalculation:
       showPaywall()
     }
   }

@@ -11,7 +11,7 @@ struct GoalVisualizationInputView: View {
   @ObservedObject var viewModel: OnboardingViewModel
   var onSubmit: () -> Void
 
-  @FocusState private var isEditorFocused: Bool
+  @State private var isEditorFocused = false
   private let placeholderText = "Share thoughts"
 
   var body: some View {
@@ -27,26 +27,14 @@ struct GoalVisualizationInputView: View {
       .multilineTextAlignment(.leading)
 
       GoalReflectionEditor {
-        ZStack(alignment: .topLeading) {
-          if viewModel.goalVisualization.isEmpty {
-            Text(placeholderText)
-              .font(.outfit(14))
-              .foregroundColor(Color(red: 0.67, green: 0.62, blue: 0.72))
-              .padding(.horizontal, 12)
-              .padding(.vertical, 12)
-          }
-
-          TextEditor(text: $viewModel.goalVisualization)
-            .font(.outfit(14))
-            .foregroundColor(Color(red: 0.13, green: 0.06, blue: 0.16))
-            .autocorrectionDisabled(false)
-            .textInputAutocapitalization(.sentences)
-            .focused($isEditorFocused)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 12)
-            .background(Color.clear)
-            .scrollContentBackground(.hidden)
-        }
+        OnboardingTextArea(
+          text: $viewModel.goalVisualization,
+          placeholder: placeholderText,
+          isFocused: Binding(
+            get: { isEditorFocused },
+            set: { isEditorFocused = $0 }
+          )
+        )
         .frame(height: 140)
       }
     }

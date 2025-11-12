@@ -114,10 +114,10 @@ enum OnboardingStep: Int, CaseIterable {
   case habitLawInfo = 14
   case coachingStyle = 15
   case accountability = 16
-  case commitment = 17
-  case motivationShift = 18
-  case postSessionMood = 19
-  case processDifficulty = 20
+  case motivationShift = 17
+  case postSessionMood = 18
+  case processDifficulty = 19
+  case planCalculation = 20
 
   var totalSteps: Int {
     OnboardingStep.allCases.count
@@ -140,8 +140,6 @@ class OnboardingViewModel: ObservableObject {
   @Published var deferredAction: String = ""
   @Published var selectedCoachingStyle: CoachingStyle?
   @Published var accountabilityPreferences: Set<AccountabilityPreference> = []
-  @Published var commitmentAction: String = ""
-  @Published var shouldRemindIn24h: Bool = true
   @Published var motivationShift: MotivationShift?
   @Published var postSessionMoods: Set<Mood> = []
   @Published var processDifficulty: ProcessDifficulty?
@@ -186,14 +184,14 @@ class OnboardingViewModel: ObservableObject {
       return selectedCoachingStyle != nil
     case .accountability:
       return !accountabilityPreferences.isEmpty
-    case .commitment:
-      return !commitmentAction.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     case .motivationShift:
       return motivationShift != nil
     case .postSessionMood:
       return !postSessionMoods.isEmpty
     case .processDifficulty:
       return processDifficulty != nil
+    case .planCalculation:
+      return true
     }
   }
 
