@@ -15,35 +15,32 @@ struct MicroActionInputView: View {
   private let placeholderText = "One tiny, concrete action."
 
   var body: some View {
-    VStack(alignment: .leading, spacing: 24) {
-      Text("How could you make 1% progress this week toward your goal?")
-        .font(.lora(24, weight: .semiBold))
-        .foregroundColor(Color(red: 0.13, green: 0.06, blue: 0.16))
-        .multilineTextAlignment(.leading)
-        .fixedSize(horizontal: false, vertical: true)
-        .frame(maxWidth: .infinity, alignment: .leading)
+    ScrollView {
+      VStack(alignment: .leading, spacing: 20) {
+        Text("How could you make 1% progress this week toward your goal?")
+          .font(.lora(24, weight: .semiBold))
+          .foregroundColor(Color(red: 0.13, green: 0.06, blue: 0.16))
+          .multilineTextAlignment(.leading)
+          .fixedSize(horizontal: false, vertical: true)
+          .frame(maxWidth: .infinity, alignment: .leading)
 
-      ZStack {
-        GeometryReader { geometry in
-          MicroActionEditor {
-            OnboardingTextArea(
-              text: $viewModel.microAction,
-              placeholder: placeholderText,
-              isFocused: Binding(
-                get: { isEditorFocused },
-                set: { isEditorFocused = $0 }
-              )
+        MicroActionEditor {
+          OnboardingTextArea(
+            text: $viewModel.microAction,
+            placeholder: placeholderText,
+            isFocused: Binding(
+              get: { isEditorFocused },
+              set: { isEditorFocused = $0 }
             )
-            .frame(height: 120)
-          }
-          .frame(width: geometry.size.width, height: 120)
+          )
+          .frame(height: 100)
         }
-        .frame(height: 120)
+        .frame(height: 100)
+        .frame(maxWidth: .infinity)
       }
-
-      Spacer()
+      .padding(.bottom, 20)
     }
-    .ignoresSafeArea(.keyboard)
+    .scrollDismissesKeyboard(.never)
     .onAppear {
       DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
         isEditorFocused = true

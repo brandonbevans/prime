@@ -15,45 +15,42 @@ struct PrimaryGoalInputView: View {
   private let placeholderText = "(e.g. making $10k/month, losing 20 pounds, finding a partner)"
 
   var body: some View {
-    VStack(alignment: .leading, spacing: 24) {
-      Text("What is your #1 goal in life right now?")
-        .font(.lora(24, weight: .semiBold))
-        .foregroundColor(Color(red: 0.13, green: 0.06, blue: 0.16))
+    ScrollView {
+      VStack(alignment: .leading, spacing: 20) {
+        Text("What is your #1 goal in life right now?")
+          .font(.lora(24, weight: .semiBold))
+          .foregroundColor(Color(red: 0.13, green: 0.06, blue: 0.16))
+          .multilineTextAlignment(.leading)
+          .fixedSize(horizontal: false, vertical: true)
+          .frame(maxWidth: .infinity, alignment: .leading)
+
+        Text(
+          "If you don't know immediately, that's okay. Take 2 minutes to think about it, and write down what you come up with."
+        )
+        .font(.outfit(14))
+        .foregroundColor(Color(red: 0.25, green: 0.22, blue: 0.32))
         .multilineTextAlignment(.leading)
+        .lineSpacing(6)
         .fixedSize(horizontal: false, vertical: true)
         .frame(maxWidth: .infinity, alignment: .leading)
 
-      Text(
-        "If you don't know immediately, that's okay. Take 2 minutes to think about it, and write down what you come up with."
-      )
-      .font(.outfit(14))
-      .foregroundColor(Color(red: 0.25, green: 0.22, blue: 0.32))
-      .multilineTextAlignment(.leading)
-      .lineSpacing(6)
-      .fixedSize(horizontal: false, vertical: true)
-      .frame(maxWidth: .infinity, alignment: .leading)
-
-      ZStack {
-        GeometryReader { geometry in
-          GoalEditorContainer {
-            OnboardingTextArea(
-              text: $viewModel.primaryGoal,
-              placeholder: placeholderText,
-              isFocused: Binding(
-                get: { isEditorFocused },
-                set: { isEditorFocused = $0 }
-              )
+        GoalEditorContainer {
+          OnboardingTextArea(
+            text: $viewModel.primaryGoal,
+            placeholder: placeholderText,
+            isFocused: Binding(
+              get: { isEditorFocused },
+              set: { isEditorFocused = $0 }
             )
-            .frame(height: 140)
-          }
-          .frame(width: geometry.size.width, height: 140)
+          )
+          .frame(height: 100)
         }
-        .frame(height: 140)
+        .frame(height: 100)
+        .frame(maxWidth: .infinity)
       }
-
-      Spacer()
+      .padding(.bottom, 20)
     }
-    .ignoresSafeArea(.keyboard)
+    .scrollDismissesKeyboard(.never)
     .onAppear {
       DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
         isEditorFocused = true

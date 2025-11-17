@@ -19,10 +19,10 @@ struct OnboardingView: View {
 
         VStack(spacing: 0) {
           OnboardingHeaderView(viewModel: viewModel)
-            .padding(.top, 64)
+            .padding(.top, 20)
 
           content
-            .padding(.top, 56)
+            .padding(.top, 24)
             .frame(maxWidth: .infinity, alignment: .leading)
 
           Spacer(minLength: 0)

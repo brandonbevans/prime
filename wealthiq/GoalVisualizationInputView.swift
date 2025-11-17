@@ -15,41 +15,38 @@ struct GoalVisualizationInputView: View {
   private let placeholderText = "Share thoughts"
 
   var body: some View {
-    VStack(alignment: .leading, spacing: 24) {
-      VStack(alignment: .leading, spacing: 10) {
-        Text("Stop and imagine what it would feel like to accomplish this goal.")
-          .font(.lora(24, weight: .semiBold))
-          .foregroundColor(Color(red: 0.13, green: 0.06, blue: 0.16))
-          .fixedSize(horizontal: false, vertical: true)
-        Text("What would be different?")
-          .font(.lora(24, weight: .semiBold))
-          .foregroundColor(Color(red: 0.13, green: 0.06, blue: 0.16))
-          .fixedSize(horizontal: false, vertical: true)
-      }
-      .multilineTextAlignment(.leading)
-      .frame(maxWidth: .infinity, alignment: .leading)
-
-      ZStack {
-        GeometryReader { geometry in
-          GoalReflectionEditor {
-            OnboardingTextArea(
-              text: $viewModel.goalVisualization,
-              placeholder: placeholderText,
-              isFocused: Binding(
-                get: { isEditorFocused },
-                set: { isEditorFocused = $0 }
-              )
-            )
-            .frame(height: 140)
-          }
-          .frame(width: geometry.size.width, height: 140)
+    ScrollView {
+      VStack(alignment: .leading, spacing: 20) {
+        VStack(alignment: .leading, spacing: 10) {
+          Text("Stop and imagine what it would feel like to accomplish this goal.")
+            .font(.lora(24, weight: .semiBold))
+            .foregroundColor(Color(red: 0.13, green: 0.06, blue: 0.16))
+            .fixedSize(horizontal: false, vertical: true)
+          Text("What would be different?")
+            .font(.lora(24, weight: .semiBold))
+            .foregroundColor(Color(red: 0.13, green: 0.06, blue: 0.16))
+            .fixedSize(horizontal: false, vertical: true)
         }
-        .frame(height: 140)
+        .multilineTextAlignment(.leading)
+        .frame(maxWidth: .infinity, alignment: .leading)
+
+        GoalReflectionEditor {
+          OnboardingTextArea(
+            text: $viewModel.goalVisualization,
+            placeholder: placeholderText,
+            isFocused: Binding(
+              get: { isEditorFocused },
+              set: { isEditorFocused = $0 }
+            )
+          )
+          .frame(height: 100)
+        }
+        .frame(height: 100)
+        .frame(maxWidth: .infinity)
       }
-      
-      Spacer()
+      .padding(.bottom, 20)
     }
-    .ignoresSafeArea(.keyboard)
+    .scrollDismissesKeyboard(.never)
     .onAppear {
       DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
         isEditorFocused = true

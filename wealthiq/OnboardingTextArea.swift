@@ -57,6 +57,7 @@ import SwiftUI
       placeholderLabel.font = Self.placeholderFont
       placeholderLabel.textColor = Self.placeholderColor
       placeholderLabel.numberOfLines = 0
+      placeholderLabel.lineBreakMode = .byWordWrapping
       placeholderLabel.translatesAutoresizingMaskIntoConstraints = false
       placeholderLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
       textView.addSubview(placeholderLabel)
@@ -71,14 +72,26 @@ import SwiftUI
           constant: insets.left + padding
         ),
         placeholderLabel.trailingAnchor.constraint(
-          equalTo: textView.trailingAnchor,
+          lessThanOrEqualTo: textView.trailingAnchor,
           constant: -(insets.right + padding)
         ),
         placeholderLabel.topAnchor.constraint(
           equalTo: textView.topAnchor,
           constant: insets.top
         ),
+        placeholderLabel.bottomAnchor.constraint(
+          lessThanOrEqualTo: textView.bottomAnchor,
+          constant: -insets.bottom
+        ),
       ])
+
+      // Set initial preferredMaxLayoutWidth for placeholder
+      DispatchQueue.main.async {
+        let availableWidth = textView.bounds.width - insets.left - insets.right - (padding * 2)
+        if availableWidth > 0 {
+          placeholderLabel.preferredMaxLayoutWidth = availableWidth
+        }
+      }
 
       context.coordinator.configure(textView: textView)
       context.coordinator.updatePlaceholderVisibility(for: text)
@@ -102,6 +115,14 @@ import SwiftUI
 
       if textView.autocorrectionType != autocorrection {
         textView.autocorrectionType = autocorrection
+      }
+
+      // Calculate available width for placeholder wrapping
+      let insets = textView.textContainerInset
+      let padding = textView.textContainer.lineFragmentPadding
+      let availableWidth = textView.bounds.width - insets.left - insets.right - (padding * 2)
+      if availableWidth > 0 {
+        context.coordinator.placeholderLabel.preferredMaxLayoutWidth = availableWidth
       }
 
       context.coordinator.updatePlaceholderVisibility(for: text)
