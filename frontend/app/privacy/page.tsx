@@ -125,7 +125,7 @@ export default function Privacy() {
           </h2>
           <p className="mt-2 text-base text-slate-300">
             If you have any questions or concerns about this Privacy Policy or our
-            data practices, please don't hesitate to reach out to us.
+            data practices, please don&apos;t hesitate to reach out to us.
           </p>
           <div className="mt-6 flex flex-col gap-4 sm:flex-row">
             <a

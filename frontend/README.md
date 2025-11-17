@@ -1,36 +1,47 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+## WealthIQ Frontend
 
-## Getting Started
+Next.js App Router project styled with Tailwind v4 preview utilities. The `/conversation` route is a debugging interface for the new FastAPI voice conversation service.
 
-First, run the development server:
+## Requirements
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- [pnpm](https://pnpm.io/) 10.x
+- Node.js 20+
+- Running Supabase project (for auth + onboarding data)
+- FastAPI conversation service (`backend/conversation_service`)
+
+## Environment variables
+
+Copy `.env.example` from the repo root and fill in:
+
+```
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+NEXT_PUBLIC_CONVERSATION_API_URL=http://localhost:8000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+`NEXT_PUBLIC_CONVERSATION_API_URL` must point to the FastAPI service so the `/conversation` page can request WebSocket sessions.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+See `backend/conversation_service/README.md` for the additional server-side variables (Supabase service key, ElevenLabs keys, etc.).
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Local development
 
-## Learn More
+```
+# 1. Start the FastAPI service (runs uvicorn)
+pnpm conversation:api
 
-To learn more about Next.js, take a look at the following resources:
+# 2. In another terminal, run the frontend
+pnpm dev
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Both commands run in `/frontend`. The `conversation:api` script wraps `uvicorn app.main:app --reload` inside `backend/conversation_service`.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Once both servers are up, visit http://localhost:3000/conversation, sign in with a Supabase user that completed onboarding, and click “Start Conversation”. The page will fetch a signed WebSocket URL from FastAPI, bridge to ElevenLabs, and play the agent’s greeting (“Hey {first_name}, how is your {primary_goal} going today?”).
 
-## Deploy on Vercel
+## Useful scripts
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| Command | Description |
+| --- | --- |
+| `pnpm dev` | Start the Next.js dev server |
+| `pnpm build` / `pnpm start` | Production build & serve |
+| `pnpm lint` | Run ESLint |
+| `pnpm conversation:api` | Launch the FastAPI conversation service |

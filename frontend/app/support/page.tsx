@@ -73,7 +73,7 @@ export default function Support() {
             Support Center
           </h1>
           <p className="mt-4 text-lg leading-relaxed text-slate-300">
-            We're here to help you get the most out of WealthIQ. Find answers to
+            We&apos;re here to help you get the most out of WealthIQ. Find answers to
             common questions or reach out to our support team.
           </p>
         </header>
@@ -110,7 +110,7 @@ export default function Support() {
               Contact Support
             </h2>
             <p className="mt-2 text-slate-400">
-              Need more help? Reach out to our support team and we'll get back to
+              Need more help? Reach out to our support team and we&apos;ll get back to
               you as soon as possible.
             </p>
           </div>
