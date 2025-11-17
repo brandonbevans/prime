@@ -13,5 +13,41 @@
 	<string>WealthIQ needs access to your microphone to transcribe your thoughts when you tap the microphone button.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
 	<string>WealthIQ uses speech recognition to convert your spoken thoughts into text for goal setting and reflection.</string>
+	<!-- Supabase Configuration -->
+	<!-- These values should match your frontend/.env.local settings -->
+	<!-- For production, replace with your actual Supabase project URL and anon key -->
+	<!-- For physical device testing, use your Mac's IP address instead of 127.0.0.1 -->
+	<key>SUPABASE_URL</key>
+	<string>http://192.168.50.17:54321</string>
+	<key>SUPABASE_ANON_KEY</key>
+	<string>sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH</string>
+	<!-- App Transport Security Settings for Local Development -->
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<false/>
+		<key>NSExceptionDomains</key>
+		<dict>
+			<!-- Allow HTTP for local network IP -->
+			<key>192.168.50.17</key>
+			<dict>
+				<key>NSExceptionAllowsInsecureHTTPLoads</key>
+				<true/>
+				<key>NSIncludesSubdomains</key>
+				<true/>
+			</dict>
+			<!-- Allow HTTP for localhost (simulator) -->
+			<key>localhost</key>
+			<dict>
+				<key>NSExceptionAllowsInsecureHTTPLoads</key>
+				<true/>
+			</dict>
+			<key>127.0.0.1</key>
+			<dict>
+				<key>NSExceptionAllowsInsecureHTTPLoads</key>
+				<true/>
+			</dict>
+		</dict>
+	</dict>
 </dict>
 </plist>

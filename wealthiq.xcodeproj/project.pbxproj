@@ -8,6 +8,12 @@
 
 /* Begin PBXBuildFile section */
 		60C80DF62EC2857B00090352 /* SuperwallKit in Frameworks */ = {isa = PBXBuildFile; productRef = 60C80DF52EC2857B00090352 /* SuperwallKit */; };
+		60D0C0012F2A5B120044D7C0 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = 60D0C0022F2A5B120044D7C0 /* Supabase */; };
+		60F9E6DF2ECBB6EB00B85991 /* Auth in Frameworks */ = {isa = PBXBuildFile; productRef = 60F9E6DE2ECBB6EB00B85991 /* Auth */; };
+		60F9E6E12ECBB6EB00B85991 /* Functions in Frameworks */ = {isa = PBXBuildFile; productRef = 60F9E6E02ECBB6EB00B85991 /* Functions */; };
+		60F9E6E32ECBB6EB00B85991 /* PostgREST in Frameworks */ = {isa = PBXBuildFile; productRef = 60F9E6E22ECBB6EB00B85991 /* PostgREST */; };
+		60F9E6E52ECBB6EB00B85991 /* Realtime in Frameworks */ = {isa = PBXBuildFile; productRef = 60F9E6E42ECBB6EB00B85991 /* Realtime */; };
+		60F9E6E72ECBB6EB00B85991 /* Storage in Frameworks */ = {isa = PBXBuildFile; productRef = 60F9E6E62ECBB6EB00B85991 /* Storage */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -41,6 +47,12 @@
 			buildActionMask = 2147483647;
 			files = (
 				60C80DF62EC2857B00090352 /* SuperwallKit in Frameworks */,
+				60D0C0012F2A5B120044D7C0 /* Supabase in Frameworks */,
+				60F9E6E72ECBB6EB00B85991 /* Storage in Frameworks */,
+				60F9E6E12ECBB6EB00B85991 /* Functions in Frameworks */,
+				60F9E6E52ECBB6EB00B85991 /* Realtime in Frameworks */,
+				60F9E6DF2ECBB6EB00B85991 /* Auth in Frameworks */,
+				60F9E6E32ECBB6EB00B85991 /* PostgREST in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -84,6 +96,12 @@
 			name = wealthiq;
 			packageProductDependencies = (
 				60C80DF52EC2857B00090352 /* SuperwallKit */,
+				60D0C0022F2A5B120044D7C0 /* Supabase */,
+				60F9E6DE2ECBB6EB00B85991 /* Auth */,
+				60F9E6E02ECBB6EB00B85991 /* Functions */,
+				60F9E6E22ECBB6EB00B85991 /* PostgREST */,
+				60F9E6E42ECBB6EB00B85991 /* Realtime */,
+				60F9E6E62ECBB6EB00B85991 /* Storage */,
 			);
 			productName = wealthiq;
 			productReference = 60FFAB1E2EC221610044D7C0 /* wealthiq.app */;
@@ -115,6 +133,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				60C80DF42EC2857A00090352 /* XCRemoteSwiftPackageReference "Superwall-iOS" */,
+				60D0C0032F2A5B120044D7C0 /* XCRemoteSwiftPackageReference "supabase-swift" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 60FFAB1F2EC221610044D7C0 /* Products */;
@@ -382,6 +401,14 @@
 				minimumVersion = 4.10.0;
 			};
 		};
+		60D0C0032F2A5B120044D7C0 /* XCRemoteSwiftPackageReference "supabase-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/supabase-community/supabase-swift";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.0.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -389,6 +416,31 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 60C80DF42EC2857A00090352 /* XCRemoteSwiftPackageReference "Superwall-iOS" */;
 			productName = SuperwallKit;
+		};
+		60D0C0022F2A5B120044D7C0 /* Supabase */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 60D0C0032F2A5B120044D7C0 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Supabase;
+		};
+		60F9E6DE2ECBB6EB00B85991 /* Auth */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = Auth;
+		};
+		60F9E6E02ECBB6EB00B85991 /* Functions */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = Functions;
+		};
+		60F9E6E22ECBB6EB00B85991 /* PostgREST */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = PostgREST;
+		};
+		60F9E6E42ECBB6EB00B85991 /* Realtime */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = Realtime;
+		};
+		60F9E6E62ECBB6EB00B85991 /* Storage */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = Storage;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

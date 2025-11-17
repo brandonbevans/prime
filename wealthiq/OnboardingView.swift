@@ -11,6 +11,8 @@ import SwiftUI
 struct OnboardingView: View {
   @StateObject private var viewModel = OnboardingViewModel()
   @State private var hasTriggeredPaywall = false
+  @State private var showingErrorAlert = false
+  @State private var showingDebugMenu = false
 
   var body: some View {
     GeometryReader { geometry in
@@ -18,6 +20,26 @@ struct OnboardingView: View {
         OnboardingBackground()
 
         VStack(spacing: 0) {
+          // Debug sign out button
+          #if DEBUG
+            HStack {
+              Spacer()
+              Button(action: {
+                showingDebugMenu = true
+              }) {
+                Image(systemName: "gearshape.fill")
+                  .font(.system(size: 20))
+                  .foregroundColor(.gray)
+                  .padding(8)
+                  .background(Color.white.opacity(0.9))
+                  .clipShape(Circle())
+                  .shadow(radius: 2)
+              }
+              .padding(.trailing, 16)
+              .padding(.top, 8)
+            }
+          #endif
+
           OnboardingHeaderView(viewModel: viewModel)
             .padding(.top, 20)
 
@@ -89,11 +111,32 @@ struct OnboardingView: View {
             }
           }
 
-          HomeIndicatorView()
-            .padding(.top, 11)
+          // Removed artificial home indicator - iOS provides its own
         }
         .padding(.horizontal, 20)
-        .padding(.bottom, 24)
+        .padding(.bottom, 8)  // Reduced padding - iOS handles safe area
+      }
+
+      // Loading overlay
+      if viewModel.isSaving {
+        ZStack {
+          Color.black.opacity(0.4)
+            .ignoresSafeArea()
+
+          VStack(spacing: 16) {
+            ProgressView()
+              .progressViewStyle(CircularProgressViewStyle())
+              .scaleEffect(1.2)
+              .tint(.white)
+
+            Text("Saving your information...")
+              .font(.outfit(16, weight: .medium))
+              .foregroundColor(.white)
+          }
+          .padding(32)
+          .background(Color(red: 0.13, green: 0.06, blue: 0.16))
+          .cornerRadius(16)
+        }
       }
     }
     .animation(.spring(response: 0.45, dampingFraction: 0.85), value: viewModel.currentStep)
@@ -103,6 +146,67 @@ struct OnboardingView: View {
         hasTriggeredPaywall = false
       }
     }
+    .alert("Error Saving Data", isPresented: $showingErrorAlert) {
+      Button("OK", role: .cancel) {
+        viewModel.saveError = nil
+      }
+    } message: {
+      Text(
+        viewModel.saveError?.localizedDescription
+          ?? "An error occurred while saving your information. Please try again.")
+    }
+    .onReceive(viewModel.$saveError) { error in
+      if error != nil {
+        showingErrorAlert = true
+      }
+    }
+    #if DEBUG
+      .actionSheet(isPresented: $showingDebugMenu) {
+        ActionSheet(
+          title: Text("Debug Menu"),
+          message: Text("Developer options"),
+          buttons: [
+            .destructive(Text("Sign Out")) {
+              Task {
+                do {
+                  try await SupabaseManager.shared.signOut()
+                  print("✅ Signed out successfully")
+                  // Post notification to refresh auth state
+                  NotificationCenter.default.post(name: .debugAuthCompleted, object: nil)
+                } catch {
+                  print("❌ Sign out failed: \(error)")
+                }
+              }
+            },
+            .destructive(Text("Force Sign Out & Clear Session")) {
+              Task {
+                do {
+                  // Force sign out even if there's an error
+                  try? await SupabaseManager.shared.signOut()
+
+                  // Clear any stored session data
+                  UserDefaults.standard.removeObject(forKey: "sb-auth-token")
+                  UserDefaults.standard.synchronize()
+
+                  print("✅ Force signed out and cleared session")
+                }
+              }
+            },
+            .default(Text("Check Session")) {
+              Task {
+                do {
+                  let userId = try await SupabaseManager.shared.getCurrentUserId()
+                  print("✅ Session valid - User ID: \(userId)")
+                } catch {
+                  print("❌ No valid session: \(error)")
+                }
+              }
+            },
+            .cancel(),
+          ]
+        )
+      }
+    #endif
   }
 
   @ViewBuilder
@@ -142,7 +246,20 @@ struct OnboardingView: View {
       CoachingStyleSelectionView(viewModel: viewModel)
     case .planCalculation:
       PlanCalculationView(viewModel: viewModel) {
-        showPaywall()
+        // Save onboarding data when plan calculation completes
+        print("🎯 Plan calculation complete - triggering save")
+        Task {
+          print("🚀 Starting onboarding data save...")
+          await viewModel.saveOnboardingData()
+          print("💾 Save complete, showing paywall")
+
+          // Post notification that onboarding is complete
+          await MainActor.run {
+            NotificationCenter.default.post(name: .onboardingCompleted, object: nil)
+          }
+
+          showPaywall()
+        }
       }
     }
   }
@@ -196,7 +313,8 @@ struct OnboardingView: View {
         viewModel.nextStep()
       }
     case .planCalculation:
-      showPaywall()
+      // This case shouldn't be reached as planCalculation doesn't have a continue button
+      break
     }
   }
 
@@ -360,14 +478,6 @@ private struct OnboardingBackground: View {
         .blur(radius: blur)
         .blendMode(.plusLighter)
     }
-  }
-}
-
-private struct HomeIndicatorView: View {
-  var body: some View {
-    Capsule()
-      .fill(Color.black.opacity(0.9))
-      .frame(width: 108, height: 4)
   }
 }
 

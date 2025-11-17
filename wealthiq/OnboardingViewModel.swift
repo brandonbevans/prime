@@ -109,6 +109,7 @@ enum OnboardingStep: Int, CaseIterable {
   }
 }
 
+@MainActor
 class OnboardingViewModel: ObservableObject {
   @Published var currentStep: OnboardingStep = .gender
   @Published var selectedGender: Gender?
@@ -120,27 +121,101 @@ class OnboardingViewModel: ObservableObject {
   @Published var microAction: String = ""
   @Published var selectedCoachingStyle: CoachingStyle?
   @Published var isRecording: Bool = false
-  
+  @Published var isSaving: Bool = false
+  @Published var saveError: Error?
+
   // Speech recognition
   let speechManager: SpeechRecognitionManager
   private var cancellables = Set<AnyCancellable>()
-  
+
+  // Supabase integration
+  private let supabaseManager = SupabaseManager.shared
+
   init() {
     self.speechManager = SpeechRecognitionManager()
-    
+
     // Subscribe to speechManager's isRecording changes
     speechManager.$isRecording
       .sink { [weak self] isRecording in
         self?.isRecording = isRecording
       }
       .store(in: &cancellables)
-    
+
     // Subscribe to transcribed text changes for real-time updates
     speechManager.$transcribedText
       .sink { [weak self] text in
         self?.updateFieldWithTranscription(text)
       }
       .store(in: &cancellables)
+
+    // Load any existing onboarding data
+    Task {
+      await loadExistingOnboardingData()
+    }
+  }
+
+  /// Load existing onboarding data if user has partial progress
+  func loadExistingOnboardingData() async {
+    guard await supabaseManager.isAuthenticated() else {
+      print("⚠️ No authenticated user - skipping data load")
+      return
+    }
+
+    do {
+      if let profile = try await supabaseManager.fetchUserProfile() {
+        print("📥 Loading existing onboarding data...")
+
+        // Restore saved values
+        if let genderString = profile.gender {
+          selectedGender = Gender(rawValue: genderString.capitalized)
+        }
+        firstName = profile.firstName != "User" ? profile.firstName : ""
+        age = profile.age > 18 ? "\(profile.age)" : ""
+
+        if let recencyString = profile.goalRecency {
+          selectedGoalRecency = mapDatabaseToGoalRecency(recencyString)
+        }
+
+        primaryGoal = profile.primaryGoal != "Not set yet" ? profile.primaryGoal : ""
+        goalVisualization =
+          profile.goalVisualization != "Not set yet" ? profile.goalVisualization : ""
+        microAction = profile.microAction != "Not set yet" ? profile.microAction : ""
+
+        if let styleString = profile.coachingStyle {
+          selectedCoachingStyle = mapDatabaseToCoachingStyle(styleString)
+        }
+
+        // If onboarding was completed, start from the beginning anyway
+        // (they might want to update their info)
+        if profile.onboardingCompleted {
+          print("ℹ️ User previously completed onboarding")
+        }
+
+        print("✅ Loaded existing progress")
+      }
+    } catch {
+      print("⚠️ Could not load existing data: \(error)")
+    }
+  }
+
+  private func mapDatabaseToGoalRecency(_ value: String) -> GoalRecency? {
+    switch value {
+    case "lastWeek": return .lastWeek
+    case "lastMonth": return .lastMonth
+    case "lastYear": return .lastYear
+    case "cantRemember": return .cantRemember
+    default: return nil
+    }
+  }
+
+  private func mapDatabaseToCoachingStyle(_ value: String) -> CoachingStyle? {
+    switch value {
+    case "direct": return .direct
+    case "dataDriven": return .dataDriven
+    case "encouraging": return .encouraging
+    case "reflective": return .reflective
+    default: return nil
+    }
   }
 
   var progress: Double {
@@ -177,8 +252,13 @@ class OnboardingViewModel: ObservableObject {
   }
 
   func nextStep() {
+    // Save current step data before moving to next
+    Task {
+      await saveCurrentStepData()
+    }
+
     guard let nextStep = OnboardingStep(rawValue: currentStep.rawValue + 1) else {
-      // Onboarding complete
+      // Onboarding complete - final save is handled by PlanCalculationView
       return
     }
     currentStep = nextStep
@@ -190,8 +270,6 @@ class OnboardingViewModel: ObservableObject {
     }
     currentStep = previousStep
   }
-
-
 
   func selectGoalRecency(_ recency: GoalRecency) {
     selectedGoalRecency = recency
@@ -208,11 +286,11 @@ class OnboardingViewModel: ObservableObject {
   func selectCoachingStyle(_ style: CoachingStyle) {
     selectedCoachingStyle = style
   }
-  
+
   // MARK: - Voice Input Methods
   private var activeRecordingField: OnboardingStep?
   private var textBeforeRecording: String = ""
-  
+
   func toggleVoiceRecording(for field: OnboardingStep) {
     if speechManager.isRecording {
       speechManager.stopRecording()
@@ -220,7 +298,7 @@ class OnboardingViewModel: ObservableObject {
       textBeforeRecording = ""
     } else {
       activeRecordingField = field
-      
+
       // Store existing text to append to
       switch field {
       case .goalVisualization:
@@ -230,21 +308,22 @@ class OnboardingViewModel: ObservableObject {
       default:
         textBeforeRecording = ""
       }
-      
+
       // Clear the transcription buffer
       speechManager.clearTranscription()
       speechManager.startRecording()
     }
   }
-  
+
   private func updateFieldWithTranscription(_ transcribedText: String) {
     guard let field = activeRecordingField else { return }
-    
+
     // Combine existing text with new transcription
-    let combinedText = textBeforeRecording.isEmpty 
-      ? transcribedText 
+    let combinedText =
+      textBeforeRecording.isEmpty
+      ? transcribedText
       : textBeforeRecording + " " + transcribedText
-    
+
     switch field {
     case .goalVisualization:
       goalVisualization = combinedText
@@ -261,5 +340,139 @@ class OnboardingViewModel: ObservableObject {
       return false
     }
     return value > 0 && value <= 120
+  }
+
+  // MARK: - Supabase Integration
+
+  /// Save current step data to Supabase (incremental save)
+  func saveCurrentStepData() async {
+    // Only save if user is authenticated
+    guard await supabaseManager.isAuthenticated() else {
+      print("⚠️ Skipping save - user not authenticated")
+      return
+    }
+
+    // Only save if we have meaningful data to save
+    switch currentStep {
+    case .gender:
+      if selectedGender == nil { return }
+    case .name:
+      if firstName.isEmpty { return }
+    case .age:
+      if !isValidAge { return }
+    case .goalRecency:
+      if selectedGoalRecency == nil { return }
+    case .primaryGoal:
+      if primaryGoal.isEmpty { return }
+    case .goalVisualization:
+      if goalVisualization.isEmpty { return }
+    case .microAction:
+      if microAction.isEmpty { return }
+    case .coachingStyle:
+      if selectedCoachingStyle == nil { return }
+    default:
+      return  // Don't save for info screens
+    }
+
+    print("💾 Auto-saving progress at step: \(currentStep)")
+
+    do {
+      // Convert age string to Int
+      let ageInt = Int(age.filter { $0.isNumber }) ?? 0
+
+      // Save current progress (will upsert if profile already exists)
+      _ = try await supabaseManager.saveOnboardingData(
+        gender: selectedGender,
+        firstName: firstName.isEmpty ? "User" : firstName,
+        age: ageInt > 0 ? ageInt : 18,  // Default age if not set
+        goalRecency: selectedGoalRecency,
+        primaryGoal: primaryGoal.isEmpty ? "Not set yet" : primaryGoal,
+        goalVisualization: goalVisualization.isEmpty ? "Not set yet" : goalVisualization,
+        microAction: microAction.isEmpty ? "Not set yet" : microAction,
+        coachingStyle: selectedCoachingStyle,
+        lastCompletedStep: String(describing: currentStep)
+      )
+
+      print("✅ Progress saved successfully")
+    } catch {
+      print("⚠️ Failed to save progress: \(error.localizedDescription)")
+      // Don't show error to user for incremental saves
+    }
+  }
+
+  /// Save onboarding data to Supabase (final save)
+  func saveOnboardingData() async {
+    isSaving = true
+    saveError = nil
+
+    do {
+      // Convert age string to Int
+      guard let ageInt = Int(age.filter { $0.isNumber }) else {
+        throw OnboardingError.invalidAge
+      }
+
+      print("📝 Attempting to save onboarding data...")
+      print("  - Name: \(firstName)")
+      print("  - Age: \(ageInt)")
+      print("  - Gender: \(selectedGender?.rawValue ?? "nil")")
+      print("  - Goal: \(primaryGoal)")
+
+      // Save to Supabase
+      let savedProfile = try await supabaseManager.saveOnboardingData(
+        gender: selectedGender,
+        firstName: firstName,
+        age: ageInt,
+        goalRecency: selectedGoalRecency,
+        primaryGoal: primaryGoal,
+        goalVisualization: goalVisualization,
+        microAction: microAction,
+        coachingStyle: selectedCoachingStyle
+      )
+
+      print("✅ Successfully saved onboarding data for user: \(savedProfile.firstName)")
+      print("  - Profile ID: \(savedProfile.id ?? -1)")
+      print("  - User ID: \(savedProfile.userId)")
+
+      // Also create a goal record for tracking
+      let goal = try await supabaseManager.createGoal(
+        goalText: primaryGoal,
+        visualizationText: goalVisualization,
+        microAction: microAction,
+        goalType: "primary"
+      )
+
+      print("✅ Created goal with ID: \(goal.id?.uuidString ?? "unknown")")
+
+    } catch let error as NSError {
+      saveError = error
+      print("❌ Failed to save onboarding data:")
+      print("  - Error: \(error.localizedDescription)")
+      print("  - Code: \(error.code)")
+      print("  - Domain: \(error.domain)")
+      print("  - Full error: \(error)")
+
+      // Try to extract more specific error information
+      if let underlyingError = error.userInfo[NSUnderlyingErrorKey] as? Error {
+        print("  - Underlying error: \(underlyingError)")
+      }
+    } catch {
+      saveError = error
+      print("❌ Failed to save onboarding data: \(error)")
+    }
+
+    isSaving = false
+  }
+}
+
+// MARK: - Custom Errors
+
+enum OnboardingError: LocalizedError {
+  case invalidAge
+
+  var errorDescription: String? {
+    switch self {
+    case .invalidAge:
+      return "Invalid age value"
+    }
   }
 }
