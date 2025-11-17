@@ -78,16 +78,14 @@ final class SpeechRecognitionManager: NSObject, ObservableObject {
     recognitionRequest.shouldReportPartialResults = true
     recognitionRequest.requiresOnDeviceRecognition = false
     
-    // Keep reference to existing text if continuing
-    let existingText = transcribedText
-    
     recognitionTask = speechRecognizer?.recognitionTask(with: recognitionRequest) { [weak self] result, error in
       var isFinal = false
       
       if let result = result {
-        // Update with the latest transcription
-        self?.transcribedText = existingText.isEmpty ? result.bestTranscription.formattedString : 
-          existingText + " " + result.bestTranscription.formattedString
+        // Stream the transcription as it comes in
+        DispatchQueue.main.async {
+          self?.transcribedText = result.bestTranscription.formattedString
+        }
         isFinal = result.isFinal
       }
       

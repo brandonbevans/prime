@@ -134,6 +134,13 @@ class OnboardingViewModel: ObservableObject {
         self?.isRecording = isRecording
       }
       .store(in: &cancellables)
+    
+    // Subscribe to transcribed text changes for real-time updates
+    speechManager.$transcribedText
+      .sink { [weak self] text in
+        self?.updateFieldWithTranscription(text)
+      }
+      .store(in: &cancellables)
   }
 
   var progress: Double {
@@ -203,45 +210,46 @@ class OnboardingViewModel: ObservableObject {
   }
   
   // MARK: - Voice Input Methods
+  private var activeRecordingField: OnboardingStep?
+  private var textBeforeRecording: String = ""
+  
   func toggleVoiceRecording(for field: OnboardingStep) {
     if speechManager.isRecording {
       speechManager.stopRecording()
-      // Apply the transcribed text to the appropriate field
-      applyTranscribedText(for: field)
+      activeRecordingField = nil
+      textBeforeRecording = ""
     } else {
-      // Clear previous transcription if starting fresh
-      speechManager.clearTranscription()
+      activeRecordingField = field
       
-      // If there's existing text, add it to the transcription manager
+      // Store existing text to append to
       switch field {
       case .goalVisualization:
-        if !goalVisualization.isEmpty {
-          speechManager.transcribedText = goalVisualization
-        }
+        textBeforeRecording = goalVisualization
       case .microAction:
-        if !microAction.isEmpty {
-          speechManager.transcribedText = microAction
-        }
+        textBeforeRecording = microAction
       default:
-        break
+        textBeforeRecording = ""
       }
       
+      // Clear the transcription buffer
+      speechManager.clearTranscription()
       speechManager.startRecording()
     }
   }
   
-  private func applyTranscribedText(for field: OnboardingStep) {
-    let transcribedText = speechManager.transcribedText.trimmingCharacters(in: .whitespacesAndNewlines)
+  private func updateFieldWithTranscription(_ transcribedText: String) {
+    guard let field = activeRecordingField else { return }
+    
+    // Combine existing text with new transcription
+    let combinedText = textBeforeRecording.isEmpty 
+      ? transcribedText 
+      : textBeforeRecording + " " + transcribedText
     
     switch field {
     case .goalVisualization:
-      if !transcribedText.isEmpty {
-        goalVisualization = transcribedText
-      }
+      goalVisualization = combinedText
     case .microAction:
-      if !transcribedText.isEmpty {
-        microAction = transcribedText
-      }
+      microAction = combinedText
     default:
       break
     }
