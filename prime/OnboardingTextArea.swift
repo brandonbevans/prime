@@ -47,9 +47,9 @@ import SwiftUI
       textView.textContainerInset = UIEdgeInsets(top: 16, left: 16, bottom: 16, right: 16)
       textView.textContainer.lineFragmentPadding = 0
       textView.adjustsFontForContentSizeCategory = true
-      textView.showsVerticalScrollIndicator = false
-      textView.alwaysBounceVertical = false
-      textView.isScrollEnabled = false
+      textView.showsVerticalScrollIndicator = true
+      textView.alwaysBounceVertical = true
+      textView.isScrollEnabled = true
       textView.contentInsetAdjustmentBehavior = .never
 
       let placeholderLabel = context.coordinator.placeholderLabel
@@ -126,9 +126,6 @@ import SwiftUI
       }
 
       context.coordinator.updatePlaceholderVisibility(for: text)
-
-      // Force content offset to always be at top
-      textView.contentOffset = .zero
 
       DispatchQueue.main.async {
         if isFocused.wrappedValue && !textView.isFirstResponder {

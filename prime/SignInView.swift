@@ -106,14 +106,25 @@ struct SignInView: View {
     do {
       // Try with HASHED nonce first as that seems to be what Supabase expects with this configuration
       let hashedNonce = sha256(nonce)
+      print("⏳ [SignInView] Attempting sign in with HASHED nonce...")
       try await supabaseManager.signInWithApple(idToken: idToken, nonce: hashedNonce)
-      print("✅ Successfully signed in with Apple")
+      print("✅ [SignInView] Successfully signed in with Apple (using hashed nonce)")
       
       // Notify that auth is complete so ContentView can refresh
       NotificationCenter.default.post(name: .debugAuthCompleted, object: nil)
     } catch {
-      print("❌ Sign in error: \(error)")
-      errorMessage = "Authentication failed. Please try again."
+      print("❌ [SignInView] Sign in error with HASHED nonce: \(error)")
+      
+      // Retry with RAW nonce
+      print("🔄 [SignInView] Retrying with RAW nonce...")
+      do {
+        try await supabaseManager.signInWithApple(idToken: idToken, nonce: nonce)
+        print("✅ [SignInView] Successfully signed in with Apple (using raw nonce)")
+        NotificationCenter.default.post(name: .debugAuthCompleted, object: nil)
+      } catch {
+        print("❌ [SignInView] Sign in error with RAW nonce: \(error)")
+        errorMessage = "Authentication failed. Please try again."
+      }
     }
 
     isLoading = false
