@@ -40,7 +40,7 @@ final class SpeechRecognitionManager: NSObject, ObservableObject {
     }
     
     // Request microphone permission
-    AVAudioSession.sharedInstance().requestRecordPermission { [weak self] granted in
+    AVAudioApplication.requestRecordPermission { [weak self] granted in
       DispatchQueue.main.async {
         if !granted {
           self?.isAuthorized = false

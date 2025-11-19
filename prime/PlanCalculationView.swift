@@ -47,7 +47,7 @@ struct PlanCalculationView: View {
     .onAppear {
       startAnimationAndAdvance()
     }
-    .onChange(of: viewModel.currentStep) { _ in
+    .onChange(of: viewModel.currentStep) {
       if viewModel.currentStep == .planCalculation {
         startAnimationAndAdvance()
       }
