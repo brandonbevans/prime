@@ -312,9 +312,10 @@
 				INFOPLIST_FILE = Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Prime;
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
-				INFOPLIST_KEY_NSCameraUsageDescription = "prime needs camera access to capture photos for your Golden Hour practice reflections.";
-				INFOPLIST_KEY_NSMicrophoneUsageDescription = "prime needs microphone access to record audio reflections during your Golden Hour practice.";
-				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "prime needs photo libray access to upload your goals during Golden Hour practice.";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Prime needs camera access to capture photos for your Golden Hour practice reflections.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Prime needs access to your microphone to transcribe your thoughts when you tap the microphone button.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Prime needs photo libray access to upload your goals during Golden Hour practice.";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "prime uses speech recognition to convert your spoken thoughts into text for goal setting and reflection.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -356,9 +357,10 @@
 				INFOPLIST_FILE = Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Prime;
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
-				INFOPLIST_KEY_NSCameraUsageDescription = "prime needs camera access to capture photos for your Golden Hour practice reflections.";
-				INFOPLIST_KEY_NSMicrophoneUsageDescription = "prime needs microphone access to record audio reflections during your Golden Hour practice.";
-				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "prime needs photo libray access to upload your goals during Golden Hour practice.";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Prime needs camera access to capture photos for your Golden Hour practice reflections.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Prime needs access to your microphone to transcribe your thoughts when you tap the microphone button.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Prime needs photo libray access to upload your goals during Golden Hour practice.";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "prime uses speech recognition to convert your spoken thoughts into text for goal setting and reflection.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
