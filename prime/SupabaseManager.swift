@@ -196,6 +196,90 @@ class SupabaseManager: ObservableObject {
     }
   }
 
+  // MARK: - Session Records
+
+  struct SessionRecord: Codable {
+    let id: UUID?
+    let userId: UUID
+    let createdAt: Date?
+    let elevenLabsConversationId: String?
+
+    enum CodingKeys: String, CodingKey {
+      case id
+      case userId = "user_id"
+      case createdAt = "created_at"
+      case elevenLabsConversationId = "elevenlabs_conversation_id"
+    }
+  }
+
+  /// Upload session audio into the sessions storage bucket and return the object path.
+  func uploadSessionAudio(
+    data: Data,
+    userId: UUID,
+    sessionId: UUID,
+    fileExtension: String,
+    mimeType: String
+  ) async throws -> String {
+    let normalizedExtension = fileExtension.trimmingCharacters(in: .whitespacesAndNewlines)
+    let safeExtension = normalizedExtension.isEmpty ? "mp3" : normalizedExtension
+    let objectPath = "sessions/\(userId.uuidString)/audio/\(sessionId.uuidString)/conversation.\(safeExtension)"
+
+    do {
+      _ = try await client.storage
+        .from("sessions")
+        .upload(
+          objectPath,
+          data: data,
+          options: FileOptions(contentType: mimeType, upsert: false)
+        )
+      return objectPath
+    } catch {
+      print("❌ Failed to upload session audio: \(error)")
+      throw error
+    }
+  }
+
+  /// Insert a new row into the public.sessions table so we can list archived sessions later.
+  func insertSessionRecord(
+    sessionId: UUID,
+    userId: UUID,
+    conversationId: String
+  ) async throws -> SessionRecord {
+    let record = SessionRecord(
+      id: sessionId,
+      userId: userId,
+      createdAt: nil,
+      elevenLabsConversationId: conversationId
+    )
+
+    do {
+      let response: PostgrestResponse<SessionRecord> =
+        try await client
+        .from("sessions")
+        .insert(record)
+        .select()
+        .single()
+        .execute()
+      return response.value
+    } catch {
+      print("❌ Failed to insert session record: \(error)")
+      throw error
+    }
+  }
+
+  /// Fetch an existing session record by ElevenLabs conversation ID.
+  func fetchSessionRecord(conversationId: String) async throws -> SessionRecord? {
+    let response: PostgrestResponse<[SessionRecord]> =
+      try await client
+      .from("sessions")
+      .select()
+      .eq("elevenlabs_conversation_id", value: conversationId)
+      .limit(1)
+      .execute()
+
+    return response.value.first
+  }
+
   /// Create a new goal for the user
   func createGoal(
     goalText: String,

@@ -11,6 +11,7 @@ import ElevenLabs
 import Combine
 import LiveKit
 import AVFoundation
+import AVFAudio
 
 // MARK: - Connection State
 
@@ -187,9 +188,13 @@ final class OrbConversationViewModel: ObservableObject {
   @Published var isInteractive: Bool = false
   @Published var userProfile: SupabaseManager.UserProfile?
   @Published var microphoneDenied: Bool = false
+  @Published var isArchivingSession: Bool = false
+  @Published var lastArchiveError: String?
   
   private var cancellables = Set<AnyCancellable>()
   private let audioSession = AVAudioSession.sharedInstance()
+  private var lastConversationStartDate: Date?
+  private var archivedConversationIds = Set<String>()
   
   func loadUserProfile() async {
     do {
@@ -212,6 +217,8 @@ final class OrbConversationViewModel: ObservableObject {
   private func startConversation(agentId: String) async {
     connectionState = .connecting
     errorMessage = nil
+    lastArchiveError = nil
+    isArchivingSession = false
     
     do {
       let hasPermission = await requestMicrophonePermission()
@@ -256,6 +263,7 @@ final class OrbConversationViewModel: ObservableObject {
       )
       
       conversation = conv
+      lastConversationStartDate = Date()
       isInteractive = true
       setupObservers(for: conv)
     } catch {
@@ -274,6 +282,10 @@ final class OrbConversationViewModel: ObservableObject {
     connectionState = .idle
     isInteractive = false
     cancellables.removeAll()
+
+    Task { [weak self] in
+      await self?.archiveMostRecentConversation()
+    }
   }
   
   private func setupObservers(for conversation: Conversation) {
@@ -318,7 +330,15 @@ final class OrbConversationViewModel: ObservableObject {
   }
   
   private func requestMicrophonePermission() async -> Bool {
-    await withCheckedContinuation { continuation in
+    if #available(iOS 17.0, *) {
+      return await withCheckedContinuation { continuation in
+        AVAudioApplication.requestRecordPermissionWithCompletionHandler { granted in
+          continuation.resume(returning: granted)
+        }
+      }
+    }
+
+    return await withCheckedContinuation { continuation in
       audioSession.requestRecordPermission { granted in
         continuation.resume(returning: granted)
       }
@@ -334,7 +354,7 @@ final class OrbConversationViewModel: ObservableObject {
       try audioSession.setCategory(
         requiredCategory,
         mode: requiredMode,
-        options: [.allowBluetooth, .defaultToSpeaker]
+        options: [.allowBluetoothHFP, .defaultToSpeaker]
       )
     }
     
@@ -342,6 +362,172 @@ final class OrbConversationViewModel: ObservableObject {
       try audioSession.setActive(true, options: [.notifyOthersOnDeactivation])
     } else {
       try audioSession.setActive(true)
+    }
+  }
+
+  // MARK: - Session Archiving
+
+  private func archiveMostRecentConversation() async {
+    isArchivingSession = true
+    lastArchiveError = nil
+
+    defer { isArchivingSession = false }
+
+    do {
+      let summaries = try await ElevenLabsAPI.fetchConversationSummaries()
+      guard
+        let conversationId = selectConversationId(
+          from: summaries,
+          startedAt: lastConversationStartDate
+        )
+      else {
+        print("⚠️ No matching conversation found to archive")
+        return
+      }
+
+      guard !archivedConversationIds.contains(conversationId) else {
+        print("ℹ️ Conversation \(conversationId) already archived")
+        return
+      }
+
+      try await archiveConversation(withId: conversationId)
+      archivedConversationIds.insert(conversationId)
+      lastConversationStartDate = nil
+    } catch {
+      lastArchiveError = error.localizedDescription
+      print("⚠️ Failed to archive conversation audio: \(error)")
+    }
+  }
+
+  private func selectConversationId(
+    from summaries: [ElevenLabsAPI.ConversationSummary],
+    startedAt startDate: Date?
+  ) -> String? {
+    guard !summaries.isEmpty else { return nil }
+
+    let ordered = summaries.sorted { $0.sortDate > $1.sortDate }
+
+    guard let startDate else {
+      return ordered.first?.id
+    }
+
+    let windowStart = startDate.addingTimeInterval(-300) // 5 minutes before start
+    let windowEnd = Date().addingTimeInterval(600) // up to 10 minutes after now
+
+    return ordered.first { summary in
+      guard let createdAt = summary.createdAt else { return true }
+      return createdAt >= windowStart && createdAt <= windowEnd
+    }?.id
+  }
+
+  private func archiveConversation(withId conversationId: String) async throws {
+    let userId = try await SupabaseManager.shared.getCurrentUserId()
+
+    var existingRecord = try await SupabaseManager.shared.fetchSessionRecord(
+      conversationId: conversationId
+    )
+    var sessionId = existingRecord?.id ?? UUID()
+
+    if existingRecord == nil {
+      existingRecord = try await SupabaseManager.shared.insertSessionRecord(
+        sessionId: sessionId,
+        userId: userId,
+        conversationId: conversationId
+      )
+      if let persistedId = existingRecord?.id {
+        sessionId = persistedId
+      }
+    } else if let persistedId = existingRecord?.id {
+      sessionId = persistedId
+    }
+
+    let downloadedAudio = try await ElevenLabsAPI.downloadConversationAudio(
+      conversationId: conversationId
+    )
+
+    let fileExtension = Self.preferredFileExtension(
+      agentFormat: nil,
+      mimeType: downloadedAudio.mimeType
+    )
+    let mimeType = downloadedAudio.mimeType ?? Self.defaultMimeType(forExtension: fileExtension)
+
+    let storagePath = try await SupabaseManager.shared.uploadSessionAudio(
+      data: downloadedAudio.data,
+      userId: userId,
+      sessionId: sessionId,
+      fileExtension: fileExtension,
+      mimeType: mimeType
+    )
+
+    print("✅ Archived conversation \(conversationId) to \(storagePath)")
+  }
+
+  private static func preferredFileExtension(
+    agentFormat: String?,
+    mimeType: String?
+  ) -> String {
+    if let mimeType,
+      let ext = fileExtension(fromMimeType: mimeType)
+    {
+      return ext
+    }
+
+    guard let agentFormat else {
+      return "mp3"
+    }
+
+    let normalized = agentFormat.lowercased()
+    if normalized.contains("wav") || normalized.contains("pcm") {
+      return "wav"
+    }
+    if normalized.contains("webm") {
+      return "webm"
+    }
+    if normalized.contains("ogg") {
+      return "ogg"
+    }
+    if normalized.contains("mp4") || normalized.contains("m4a") {
+      return "m4a"
+    }
+    if normalized.contains("mp3") {
+      return "mp3"
+    }
+    return "mp3"
+  }
+
+  private static func fileExtension(fromMimeType mimeType: String) -> String? {
+    let baseMime = mimeType.split(separator: ";", maxSplits: 1).first?
+      .trimmingCharacters(in: .whitespacesAndNewlines)
+      .lowercased()
+
+    switch baseMime {
+    case "audio/mpeg":
+      return "mp3"
+    case "audio/webm":
+      return "webm"
+    case "audio/ogg":
+      return "ogg"
+    case "audio/x-wav", "audio/wav", "audio/vnd.wave":
+      return "wav"
+    case "audio/mp4", "audio/m4a":
+      return "m4a"
+    default:
+      return nil
+    }
+  }
+
+  private static func defaultMimeType(forExtension ext: String) -> String {
+    switch ext.lowercased() {
+    case "webm":
+      return "audio/webm"
+    case "ogg":
+      return "audio/ogg"
+    case "wav":
+      return "audio/wav"
+    case "m4a", "mp4":
+      return "audio/mp4"
+    default:
+      return "audio/mpeg"
     }
   }
 }
