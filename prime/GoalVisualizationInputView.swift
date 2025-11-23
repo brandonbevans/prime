@@ -20,11 +20,11 @@ struct GoalVisualizationInputView: View {
       VStack(alignment: .leading, spacing: 20) {
         VStack(alignment: .leading, spacing: 10) {
           Text("Imagine what it would feel like to accomplish this goal.")
-            .font(.lora(24, weight: .semiBold))
+            .font(.system(size: 24, weight: .semibold))
             .foregroundColor(Color(red: 0.13, green: 0.06, blue: 0.16))
             .fixedSize(horizontal: false, vertical: true)
           Text("What would be different? How would your life change?")
-            .font(.lora(24, weight: .semiBold))
+            .font(.system(size: 24, weight: .semibold))
             .foregroundColor(Color(red: 0.13, green: 0.06, blue: 0.16))
             .fixedSize(horizontal: false, vertical: true)
         }
@@ -57,7 +57,7 @@ struct GoalVisualizationInputView: View {
           isEditorFocused = false
           onSubmit()
         }
-        .font(.outfit(16, weight: .medium))
+        .font(.system(size: 16, weight: .medium))
       }
     }
   }

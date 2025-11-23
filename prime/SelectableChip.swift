@@ -27,7 +27,7 @@ struct GradientSelectableChip: View {
     Button(action: action) {
       HStack(spacing: 8) {
         Text(title)
-          .font(.outfit(14, weight: .medium))
+          .font(.system(size: 14, weight: .medium))
           .foregroundColor(Color(red: 0.13, green: 0.06, blue: 0.16))
           .multilineTextAlignment(.center)
           .lineLimit(2)

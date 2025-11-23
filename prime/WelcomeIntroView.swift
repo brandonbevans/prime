@@ -26,7 +26,7 @@ struct WelcomeIntroView: View {
           .font(.system(size: 40))
 
         Text(greetingText)
-          .font(.lora(24, weight: .semiBold))
+          .font(.system(size: 24, weight: .semibold))
           .foregroundColor(Color(red: 0.13, green: 0.06, blue: 0.16))
           .multilineTextAlignment(.leading)
       }
@@ -42,7 +42,7 @@ struct WelcomeIntroView: View {
           "It will take about 10 minutes to get started. You'll need a quiet place to think, listen, and speak."
         )
       }
-      .font(.outfit(14))
+      .font(.system(size: 14))
       .foregroundColor(Color(red: 0.25, green: 0.22, blue: 0.32))
       .multilineTextAlignment(.leading)
       .lineSpacing(6)

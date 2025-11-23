@@ -18,7 +18,7 @@ struct OnboardingHeaderView: View {
                 }
             }) {
                 Image(systemName: "chevron.left")
-                    .font(.outfit(16, weight: .semiBold))
+                    .font(.system(size: 16, weight: .semibold))
                     .foregroundColor(Color(red: 0.26, green: 0.23, blue: 0.36))
                     .frame(width: 24, height: 24)
             }

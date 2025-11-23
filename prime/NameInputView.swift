@@ -16,7 +16,7 @@ struct NameInputView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 24) {
             Text("What's your first name?")
-                .font(.lora(24, weight: .semiBold))
+                .font(.system(size: 24, weight: .semibold))
                 .foregroundColor(Color(red: 0.13, green: 0.06, blue: 0.16))
                 .multilineTextAlignment(.leading)
             
@@ -32,12 +32,12 @@ struct NameInputView: View {
                         "",
                         text: $viewModel.firstName,
                         prompt: Text("e.g. John")
-                            .font(.outfit(14))
+                            .font(.system(size: 14))
                             .foregroundColor(Color(red: 0.73, green: 0.67, blue: 0.75))
                     )
                     .textInputAutocapitalization(.words)
                     .autocorrectionDisabled()
-                    .font(.outfit(14))
+                    .font(.system(size: 14))
                     .foregroundColor(Color(red: 0.13, green: 0.06, blue: 0.16))
                     .padding(.horizontal, 24)
                     .focused($isTextFieldFocused)

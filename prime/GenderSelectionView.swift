@@ -13,7 +13,7 @@ struct GenderSelectionView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 24) {
             Text("What is your gender?")
-        .font(.lora(24, weight: .semiBold))
+        .font(.system(size: 24, weight: .semibold))
                 .foregroundColor(Color(red: 0.13, green: 0.06, blue: 0.16))
                 .multilineTextAlignment(.leading)
             
@@ -78,11 +78,11 @@ private struct GenderChip: View {
         Button(action: action) {
       HStack(spacing: 8) {
         Text(symbol)
-          .font(.outfit(14, weight: .medium))
+          .font(.system(size: 14, weight: .medium))
           .foregroundColor(Color(red: 0.20, green: 0.18, blue: 0.19))
 
         Text(title)
-          .font(.outfit(14, weight: .medium))
+          .font(.system(size: 14, weight: .medium))
           .foregroundColor(Color(red: 0.20, green: 0.18, blue: 0.19))
       }
       .frame(maxWidth: .infinity)

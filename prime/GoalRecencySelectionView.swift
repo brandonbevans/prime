@@ -14,7 +14,7 @@ struct GoalRecencySelectionView: View {
   var body: some View {
     VStack(alignment: .leading, spacing: 24) {
       Text("When was the last time you\nwrote down your goals?")
-        .font(.lora(24, weight: .semiBold))
+        .font(.system(size: 24, weight: .semibold))
         .foregroundColor(Color(red: 0.13, green: 0.06, blue: 0.16))
         .multilineTextAlignment(.leading)
 
@@ -54,7 +54,7 @@ private struct GoalRecencyChip: View {
   var body: some View {
     Button(action: action) {
       Text(title)
-        .font(.outfit(16, weight: .medium))
+        .font(.system(size: 16, weight: .medium))
         .foregroundColor(Color(red: 0.13, green: 0.06, blue: 0.16))
         .frame(maxWidth: .infinity)
         .padding(.vertical, 18)

@@ -30,7 +30,7 @@ struct AgeInputView: View {
   var body: some View {
     VStack(alignment: .leading, spacing: 24) {
       Text("What is your age?")
-        .font(.lora(24, weight: .semiBold))
+        .font(.system(size: 24, weight: .semibold))
         .foregroundColor(Color(red: 0.13, green: 0.06, blue: 0.16))
         .multilineTextAlignment(.leading)
 
@@ -47,17 +47,17 @@ struct AgeInputView: View {
               "",
               text: ageBinding,
               prompt: Text("27")
-                .font(.outfit(14))
+                .font(.system(size: 14))
                 .foregroundColor(Color(red: 0.73, green: 0.67, blue: 0.75))
             )
             .autocorrectionDisabled()
             .keyboardType(.numberPad)
-            .font(.outfit(14))
+            .font(.system(size: 14))
             .foregroundColor(Color(red: 0.13, green: 0.06, blue: 0.16))
             .focused($isTextFieldFocused)
 
             Text("Years")
-              .font(.outfit(14))
+              .font(.system(size: 14))
               .foregroundColor(Color(red: 0.13, green: 0.06, blue: 0.16).opacity(0.7))
           }
           .frame(maxWidth: .infinity, alignment: .leading)

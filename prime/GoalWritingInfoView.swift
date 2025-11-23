@@ -15,7 +15,7 @@ struct GoalWritingInfoView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
 
       Text("The Power of\nWriting Down Goals")
-        .font(.lora(24, weight: .semiBold))
+        .font(.system(size: 24, weight: .semibold))
         .foregroundColor(Color(red: 0.13, green: 0.06, blue: 0.16))
         .multilineTextAlignment(.leading)
 
@@ -33,7 +33,7 @@ struct GoalWritingInfoView: View {
           It engages your mind’s built-in goal-seeking mechanism, intensifying your focus and motivation. In fact, simply writing down what you want makes you significantly more likely to achieve it.
           """)
       }
-      .font(.outfit(14))
+      .font(.system(size: 14))
       .foregroundColor(Color(red: 0.25, green: 0.22, blue: 0.32))
       .multilineTextAlignment(.leading)
       .lineSpacing(6)

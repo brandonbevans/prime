@@ -18,7 +18,7 @@ struct PrimaryGoalInputView: View {
     ScrollView {
       VStack(alignment: .leading, spacing: 20) {
         Text("What is your #1 goal in life right now?")
-          .font(.lora(24, weight: .semiBold))
+          .font(.system(size: 24, weight: .semibold))
           .foregroundColor(Color(red: 0.13, green: 0.06, blue: 0.16))
           .multilineTextAlignment(.leading)
           .fixedSize(horizontal: false, vertical: true)
@@ -27,7 +27,7 @@ struct PrimaryGoalInputView: View {
         Text(
           "If you don't know immediately, that's okay. Take 2 minutes to think about it, and write down what you come up with."
         )
-        .font(.outfit(14))
+        .font(.system(size: 14))
         .foregroundColor(Color(red: 0.25, green: 0.22, blue: 0.32))
         .multilineTextAlignment(.leading)
         .lineSpacing(6)
@@ -60,7 +60,7 @@ struct PrimaryGoalInputView: View {
           isEditorFocused = false
           onSubmit()
         }
-        .font(.outfit(16, weight: .medium))
+        .font(.system(size: 16, weight: .medium))
       }
     }
   }

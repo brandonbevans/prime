@@ -25,7 +25,7 @@ struct PlanCalculationView: View {
 
       VStack(alignment: .leading, spacing: 14) {
         Text(isComplete ? "Your Personal Plan Is Ready!" : "Calculating Your Plan…")
-          .font(.lora(24, weight: .semiBold))
+          .font(.system(size: 24, weight: .semibold))
           .foregroundColor(Color(red: 0.13, green: 0.06, blue: 0.16))
 
         Text(
@@ -33,13 +33,13 @@ struct PlanCalculationView: View {
             ? "Your personal plan is ready. It's time to invest in yourself. In this app we'll raise your self-esteem, teach you how to tap into the superconscious, and turn your brain into a goal-achieving machine."
             : "Take a moment to reflect on how you're feeling in this very moment compared to when you started.\nDo you see how this process has lifted your spirits even just a little bit?\nThis is the power of visualization and goal setting at work.\nIt is a skill in of itself, and that was is what we'll continue to develop in the coming weeks."
         )
-        .font(.outfit(16))
+        .font(.system(size: 16))
         .foregroundColor(Color(red: 0.25, green: 0.22, blue: 0.32))
         .lineSpacing(6)
         .multilineTextAlignment(.leading)
 
         Text("\(Int(animationProgress * 100))% complete")
-          .font(.outfit(14, weight: .medium))
+          .font(.system(size: 14, weight: .medium))
           .foregroundColor(Color(red: 0.36, green: 0.33, blue: 0.46))
       }
     }

@@ -27,7 +27,7 @@ struct ContinueButtonView: View {
                     )
                 
                 Text(title)
-                    .font(.outfit(16, weight: .semiBold))
+                    .font(.system(size: 16, weight: .semibold))
                     .foregroundStyle(textGradient)
             }
         }

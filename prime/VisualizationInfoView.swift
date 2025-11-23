@@ -15,7 +15,7 @@ struct VisualizationInfoView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
 
       Text("Programming Your\nMind Through Visualization")
-        .font(.lora(24, weight: .semiBold))
+        .font(.system(size: 24, weight: .semibold))
         .foregroundColor(Color(red: 0.13, green: 0.06, blue: 0.16))
         .multilineTextAlignment(.leading)
 
@@ -24,7 +24,7 @@ struct VisualizationInfoView: View {
         Text("When you visualize yourself accomplishing a goal, you’re literally programming your brain and body for success – firing the same neural circuits you’d use if it were happening for real.")
         Text("This kind of mental rehearsal is so effective that it’s a staple for elite performers – nearly all Olympic athletes use visualization to boost their confidence and performance before the real competition.")
       }
-      .font(.outfit(14))
+      .font(.system(size: 14))
       .foregroundColor(Color(red: 0.25, green: 0.22, blue: 0.32))
       .lineSpacing(6)
     }

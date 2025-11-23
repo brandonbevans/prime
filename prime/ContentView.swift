@@ -36,25 +36,13 @@ struct ContentView: View {
         }
       } else {
         // User needs to authenticate
-        #if DEBUG
-          // In debug mode, show the debug auth view
-          DebugAuthView()
-            .onReceive(NotificationCenter.default.publisher(for: .debugAuthCompleted)) { _ in
-              // Re-check authentication after debug auth completes
-              Task {
-                await checkAuthentication()
-              }
+        SignInView()
+          .onReceive(NotificationCenter.default.publisher(for: .debugAuthCompleted)) { _ in
+            // Re-check authentication after auth completes
+            Task {
+              await checkAuthentication()
             }
-        #else
-          // In production, show Sign in with Apple
-          SignInView()
-            .onReceive(NotificationCenter.default.publisher(for: .debugAuthCompleted)) { _ in
-              // Re-check authentication after auth completes
-              Task {
-                await checkAuthentication()
-              }
-            }
-        #endif
+          }
       }
     }
     .task {

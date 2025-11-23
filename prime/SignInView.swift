@@ -14,89 +14,111 @@ struct SignInView: View {
   @State private var currentNonce: String?
   @State private var isLoading = false
   @State private var errorMessage: String?
+  @State private var showDebugAuth = false
 
   var body: some View {
-    VStack(spacing: 24) {
-      Spacer()
+    ZStack {
+      // Background
+      OnboardingBackground()
 
-      // Logo or App Name
-      VStack(spacing: 16) {
-        Image(systemName: "sparkles")
-          .font(.system(size: 80))
-          .foregroundStyle(.blue)
-          .symbolEffect(.bounce, value: isLoading)
-
-        Text("Welcome to Prime")
-          .font(.largeTitle)
-          .fontWeight(.bold)
-
-        Text("Your personal growth companion")
-          .font(.body)
-          .foregroundStyle(.secondary)
-      }
-
-      Spacer()
-
-      if isLoading {
-        ProgressView()
-          .scaleEffect(1.5)
-          .padding()
-      } else {
-        // Sign in with Apple Button
-        SignInWithAppleButton(
-          onRequest: { request in
-            let nonce = randomNonceString()
-            currentNonce = nonce
-            request.requestedScopes = [.fullName, .email]
-            request.nonce = sha256(nonce)
-          },
-          onCompletion: { result in
-            switch result {
-            case .success(let authResults):
-              switch authResults.credential {
-              case let appleIDCredential as ASAuthorizationAppleIDCredential:
-                guard let nonce = currentNonce else {
-                  fatalError("Invalid state: A login callback was received, but no login request was sent.")
-                }
-                guard let appleIDToken = appleIDCredential.identityToken else {
-                  print("Unable to fetch identity token")
-                  return
-                }
-                guard let idTokenString = String(data: appleIDToken, encoding: .utf8) else {
-                  print("Unable to serialize token string from data: \(appleIDToken.debugDescription)")
-                  return
-                }
-
-                Task {
-                  await handleSignIn(idToken: idTokenString, nonce: nonce)
-                }
-
-              default:
-                break
-              }
-            case .failure(let error):
-              print("Sign in with Apple failed: \(error.localizedDescription)")
-              errorMessage = "Sign in failed. Please try again."
-            }
+      VStack(spacing: 0) {
+        #if DEBUG
+        HStack {
+          Spacer()
+          Button(action: {
+            showDebugAuth = true
+          }) {
+            Image(systemName: "ladybug.fill")
+              .font(.system(size: 24))
+              .foregroundStyle(.gray.opacity(0.5))
+              .padding()
           }
-        )
-        .signInWithAppleButtonStyle(.black)
-        .frame(height: 50)
-        .cornerRadius(12)
-        .padding(.horizontal, 40)
-      }
+        }
+        #endif
 
-      if let error = errorMessage {
-        Text(error)
-          .font(.caption)
-          .foregroundStyle(.red)
-          .padding()
-      }
+        Spacer()
 
-      Spacer()
-        .frame(height: 40)
+        // Logo
+        Image("regularlogo")
+          .resizable()
+          .scaledToFit()
+          .frame(width: 280, height: 280)
+          .opacity(0.7)
+
+        // Tagline
+        Text("Are you prime?")
+          .font(.system(size: 32, weight: .semibold))
+          .multilineTextAlignment(.center)
+          .foregroundStyle(Color(red: 0.6, green: 0.6, blue: 0.6)) // Light grey text
+          .padding(.horizontal, 20)
+          .padding(.top, -20) // Negative padding to pull it closer if needed, or just rely on spacing
+
+        Spacer()
+
+        if isLoading {
+          ProgressView()
+            .scaleEffect(1.5)
+            .padding()
+        } else {
+          // Sign in with Apple Button
+          SignInWithAppleButton(
+            onRequest: { request in
+              let nonce = randomNonceString()
+              currentNonce = nonce
+              request.requestedScopes = [.fullName, .email]
+              request.nonce = sha256(nonce)
+            },
+            onCompletion: { result in
+              switch result {
+              case .success(let authResults):
+                switch authResults.credential {
+                case let appleIDCredential as ASAuthorizationAppleIDCredential:
+                  guard let nonce = currentNonce else {
+                    fatalError("Invalid state: A login callback was received, but no login request was sent.")
+                  }
+                  guard let appleIDToken = appleIDCredential.identityToken else {
+                    print("Unable to fetch identity token")
+                    return
+                  }
+                  guard let idTokenString = String(data: appleIDToken, encoding: .utf8) else {
+                    print("Unable to serialize token string from data: \(appleIDToken.debugDescription)")
+                    return
+                  }
+
+                  Task {
+                    await handleSignIn(idToken: idTokenString, nonce: nonce)
+                  }
+
+                default:
+                  break
+                }
+              case .failure(let error):
+                print("Sign in with Apple failed: \(error.localizedDescription)")
+                errorMessage = "Sign in failed. Please try again."
+              }
+            }
+          )
+          .signInWithAppleButtonStyle(.black)
+          .frame(height: 50)
+          .cornerRadius(25) // Pill shape
+          .padding(.horizontal, 40)
+        }
+
+        if let error = errorMessage {
+          Text(error)
+            .font(.caption)
+            .foregroundStyle(.red)
+            .padding()
+        }
+        
+        Spacer()
+          .frame(height: 20)
+      }
+      .padding()
     }
-    .padding()
+    .sheet(isPresented: $showDebugAuth) {
+      DebugAuthView()
+    }
   }
 
   private func handleSignIn(idToken: String, nonce: String) async {
@@ -159,6 +181,162 @@ struct SignInView: View {
     }.joined()
 
     return hashString
+  }
+}
+
+// MARK: - Background
+
+private struct OnboardingBackground: View {
+  var body: some View {
+    Color.white
+      .ignoresSafeArea()
+      .overlay(
+        AccentBlob(
+          palette: .top,
+          stretch: CGSize(width: 1.45, height: 1.05),
+          rotation: .degrees(-18)
+        )
+        .frame(width: 280, height: 260)
+        .offset(x: 270, y: -42),
+        alignment: .topLeading
+      )
+      .overlay(
+        AccentBlob(
+          palette: .bottom,
+          stretch: CGSize(width: 1.3, height: 1.15),
+          rotation: .degrees(16)
+        )
+        .frame(width: 340, height: 330)
+        .offset(x: -210, y: 400),
+        alignment: .topLeading
+      )
+      .overlay(
+        RadialGradient(
+          gradient: Gradient(colors: [
+            Color(red: 0.37, green: 0.29, blue: 0.58).opacity(0.12),
+            Color.white.opacity(0),
+          ]),
+          center: .center,
+          startRadius: 40,
+          endRadius: 520
+        )
+      )
+      .ignoresSafeArea()
+  }
+
+  private struct AccentBlob: View {
+    struct Palette {
+      let core: Color
+      let highlight: Color
+      let glow: Color
+
+      static let top = Palette(
+        core: Color(red: 0.62, green: 0.83, blue: 1.0),
+        highlight: Color(red: 0.72, green: 0.88, blue: 1.0),
+        glow: Color(red: 0.64, green: 0.86, blue: 0.99)
+      )
+
+      static let bottom = Palette(
+        core: Color(red: 0.62, green: 0.83, blue: 1.0),
+        highlight: Color(red: 0.72, green: 0.88, blue: 1.0),
+        glow: Color(red: 0.64, green: 0.86, blue: 0.99)
+      )
+    }
+
+    let palette: Palette
+    let stretch: CGSize
+    let rotation: Angle
+
+    init(
+      palette: Palette,
+      stretch: CGSize = CGSize(width: 1, height: 1),
+      rotation: Angle = .zero
+    ) {
+      self.palette = palette
+      self.stretch = stretch
+      self.rotation = rotation
+    }
+
+    var body: some View {
+      GeometryReader { proxy in
+        let maxDimension = max(proxy.size.width, proxy.size.height)
+        let haloSize = maxDimension * 1.45
+        let coreSize = maxDimension * 1.05
+        let highlightSize = maxDimension * 0.92
+        let haloBlur = haloSize * 0.35
+        let coreBlur = coreSize * 0.28
+        let highlightBlur = highlightSize * 0.32
+
+        ZStack {
+          haloLayer(size: haloSize, blur: haloBlur)
+          coreLayer(size: coreSize, blur: coreBlur)
+          highlightLayer(size: highlightSize, blur: highlightBlur)
+        }
+        .scaleEffect(x: stretch.width, y: stretch.height, anchor: .center)
+        .rotationEffect(rotation)
+        .frame(width: proxy.size.width, height: proxy.size.height)
+        .compositingGroup()
+        .allowsHitTesting(false)
+      }
+    }
+
+    @ViewBuilder
+    private func haloLayer(size: CGFloat, blur: CGFloat) -> some View {
+      Ellipse()
+        .fill(
+          RadialGradient(
+            gradient: Gradient(stops: [
+              .init(color: palette.glow.opacity(0.26), location: 0),
+              .init(color: palette.glow.opacity(0.12), location: 0.35),
+              .init(color: palette.glow.opacity(0.0), location: 1),
+            ]),
+            center: .center,
+            startRadius: 0,
+            endRadius: size
+          )
+        )
+        .frame(width: size, height: size)
+        .blur(radius: blur)
+        .blendMode(.plusLighter)
+    }
+
+    @ViewBuilder
+    private func coreLayer(size: CGFloat, blur: CGFloat) -> some View {
+      Ellipse()
+        .fill(
+          RadialGradient(
+            gradient: Gradient(stops: [
+              .init(color: palette.core.opacity(0.55), location: 0),
+              .init(color: palette.core.opacity(0.18), location: 0.4),
+              .init(color: palette.core.opacity(0.0), location: 1),
+            ]),
+            center: .center,
+            startRadius: 0,
+            endRadius: size
+          )
+        )
+        .frame(width: size, height: size * 0.92)
+        .blur(radius: blur)
+        .blendMode(.plusLighter)
+    }
+
+    @ViewBuilder
+    private func highlightLayer(size: CGFloat, blur: CGFloat) -> some View {
+      Ellipse()
+        .fill(
+          LinearGradient(
+            gradient: Gradient(stops: [
+              .init(color: palette.highlight.opacity(0.48), location: 0),
+              .init(color: palette.highlight.opacity(0.0), location: 1),
+            ]),
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+          )
+        )
+        .frame(width: size, height: size * 0.78)
+        .blur(radius: blur)
+        .blendMode(.plusLighter)
+    }
   }
 }
 

@@ -19,7 +19,7 @@ struct MicroActionInputView: View {
     ScrollView {
       VStack(alignment: .leading, spacing: 20) {
         Text("How could you make 1% progress toward your goal?")
-          .font(.lora(24, weight: .semiBold))
+          .font(.system(size: 24, weight: .semibold))
           .foregroundColor(Color(red: 0.13, green: 0.06, blue: 0.16))
           .multilineTextAlignment(.leading)
           .fixedSize(horizontal: false, vertical: true)
@@ -51,7 +51,7 @@ struct MicroActionInputView: View {
           isEditorFocused = false
           onSubmit()
         }
-        .font(.outfit(16, weight: .medium))
+        .font(.system(size: 16, weight: .medium))
       }
     }
   }

@@ -203,24 +203,12 @@ import SwiftUI
   }
 
   extension OnboardingTextArea {
-    fileprivate static let font: UIFont = {
-      if let customFont = UIFont(name: "Outfit-Regular", size: 14) {
-        return customFont
-      } else {
-        return UIFont.systemFont(ofSize: 14, weight: .regular)
-      }
-    }()
+    fileprivate static let font: UIFont = UIFont.systemFont(ofSize: 14, weight: .regular)
 
     fileprivate static let textColor = UIColor(red: 0.13, green: 0.06, blue: 0.16, alpha: 1.0)
     fileprivate static let placeholderColor = UIColor(
       red: 0.67, green: 0.62, blue: 0.72, alpha: 1.0)
-    fileprivate static let placeholderFont: UIFont = {
-      if let customFont = UIFont(name: "Outfit-Regular", size: 14) {
-        return customFont
-      } else {
-        return UIFont.systemFont(ofSize: 14, weight: .regular)
-      }
-    }()
+    fileprivate static let placeholderFont: UIFont = UIFont.systemFont(ofSize: 14, weight: .regular)
 
     fileprivate static func clampContentOffsetIfNeeded(_ textView: UITextView) {
       // Always keep the content offset at or above the top so the cursor
