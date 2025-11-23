@@ -44,6 +44,7 @@ struct SignInView: View {
           .scaledToFit()
           .frame(width: 280, height: 280)
           .opacity(0.7)
+          .frame(maxWidth: .infinity) // Ensure centering horizontally
 
         // Tagline
         Text("Are you prime?")
@@ -52,6 +53,7 @@ struct SignInView: View {
           .foregroundStyle(Color(red: 0.6, green: 0.6, blue: 0.6)) // Light grey text
           .padding(.horizontal, 20)
           .padding(.top, -20) // Negative padding to pull it closer if needed, or just rely on spacing
+          .frame(maxWidth: .infinity) // Ensure centering horizontally
 
         Spacer()
 
