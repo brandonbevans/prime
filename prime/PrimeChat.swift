@@ -12,6 +12,7 @@ import Combine
 import LiveKit
 import AVFoundation
 import AVFAudio
+import MediaPlayer
 
 // MARK: - Connection State
 
@@ -412,6 +413,70 @@ final class OrbConversationViewModel: ObservableObject {
       ConversationAudioEngine.shared.setVoiceVolume(isSpeakerMuted ? 0.0 : 1.0)
   }
   
+  // MARK: - Lock Screen / Background Controls
+  
+  private func setupLockScreenControls() {
+      let center = MPRemoteCommandCenter.shared()
+      
+      // Clear existing targets
+      center.playCommand.removeTarget(nil)
+      center.pauseCommand.removeTarget(nil)
+      center.stopCommand.removeTarget(nil)
+      center.togglePlayPauseCommand.removeTarget(nil)
+      
+      // Play Command (Resume / Unmute)
+      center.playCommand.isEnabled = true
+      center.playCommand.addTarget { [weak self] _ in
+          guard let self = self else { return .commandFailed }
+          if self.isMuted {
+              self.toggleMute()
+          }
+          self.updateNowPlayingInfo(isPlaying: true)
+          return .success
+      }
+      
+      // Pause Command (Mute)
+      center.pauseCommand.isEnabled = true
+      center.pauseCommand.addTarget { [weak self] _ in
+          guard let self = self else { return .commandFailed }
+          if !self.isMuted {
+              self.toggleMute()
+          }
+          self.updateNowPlayingInfo(isPlaying: false)
+          return .success
+      }
+      
+      // Stop Command (End Call)
+      center.stopCommand.isEnabled = true
+      center.stopCommand.addTarget { [weak self] _ in
+          guard let self = self else { return .commandFailed }
+          Task {
+              await self.endConversation()
+          }
+          return .success
+      }
+      
+      updateNowPlayingInfo(isPlaying: true)
+  }
+  
+  private func clearLockScreenControls() {
+      let center = MPRemoteCommandCenter.shared()
+      center.playCommand.removeTarget(nil)
+      center.pauseCommand.removeTarget(nil)
+      center.stopCommand.removeTarget(nil)
+      MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
+  }
+  
+  private func updateNowPlayingInfo(isPlaying: Bool) {
+      var nowPlayingInfo = [String: Any]()
+      nowPlayingInfo[MPMediaItemPropertyTitle] = "Prime Coach"
+      nowPlayingInfo[MPMediaItemPropertyArtist] = "Conversation"
+      nowPlayingInfo[MPNowPlayingInfoPropertyIsLiveStream] = true
+      nowPlayingInfo[MPNowPlayingInfoPropertyPlaybackRate] = isPlaying ? 1.0 : 0.0
+      
+      MPNowPlayingInfoCenter.default().nowPlayingInfo = nowPlayingInfo
+  }
+  
   private func startConversation(agentId: String) async {
     connectionState = .connecting
     errorMessage = nil
@@ -465,6 +530,7 @@ final class OrbConversationViewModel: ObservableObject {
       lastConversationStartDate = Date()
       isInteractive = true
       setupObservers(for: conv)
+      setupLockScreenControls()
       conversationAudioEngine.startMusic()
       conversationAudioEngine.attach(conversation: conv)
     } catch {
@@ -475,6 +541,7 @@ final class OrbConversationViewModel: ObservableObject {
   }
   
   func endConversation() async {
+    clearLockScreenControls()
     await conversation?.endConversation()
     conversationAudioEngine.stop()
     conversation = nil
@@ -559,6 +626,7 @@ final class OrbConversationViewModel: ObservableObject {
           .receive(on: DispatchQueue.main)
           .sink { [weak self] isMuted in
               self?.isMuted = isMuted
+              self?.updateNowPlayingInfo(isPlaying: !isMuted)
           }
           .store(in: &cancellables)
   }
