@@ -37,12 +37,12 @@ struct ContentView: View {
       } else {
         // User needs to authenticate
         SignInView()
-          .onReceive(NotificationCenter.default.publisher(for: .debugAuthCompleted)) { _ in
-            // Re-check authentication after auth completes
-            Task {
-              await checkAuthentication()
-            }
-          }
+      }
+    }
+    .onReceive(NotificationCenter.default.publisher(for: .debugAuthCompleted)) { _ in
+      // Re-check authentication after sign in or sign out
+      Task {
+        await checkAuthentication()
       }
     }
     .task {

@@ -122,7 +122,9 @@ struct AnimatedOrbView: View {
       return 0.8
     case .thinking:
       return 1.5
-    default:
+    case .unknown, .connecting, .initializing:
+      return 2.0
+    @unknown default:
       return 2.0
     }
   }
@@ -135,7 +137,9 @@ struct AnimatedOrbView: View {
       return (0.95, 1.1)
     case .thinking:
       return (0.97, 1.03)
-    default:
+    case .unknown, .connecting, .initializing:
+      return (0.98, 1.02)
+    @unknown default:
       return (0.98, 1.02)
     }
   }
@@ -244,7 +248,7 @@ struct MessageBubble: View {
             if isUser { Spacer() }
             
             if isUser {
-                Text(message.content ?? "")
+                Text(message.content)
                     .padding(.horizontal, 16)
                     .padding(.vertical, 12)
                     .background(Color.primePrimaryText)
@@ -253,7 +257,7 @@ struct MessageBubble: View {
                     .cornerRadius(4, corners: .bottomRight)
             } else {
                 if isLast {
-                    TypewriterText(text: message.content ?? "")
+                    TypewriterText(text: message.content)
                         .padding(.horizontal, 16)
                         .padding(.vertical, 12)
                         .background(Color.primeControlBg)
@@ -261,7 +265,7 @@ struct MessageBubble: View {
                         .cornerRadius(20)
                         .cornerRadius(4, corners: .bottomLeft)
                 } else {
-                    Text(message.content ?? "")
+                    Text(message.content)
                         .padding(.horizontal, 16)
                         .padding(.vertical, 12)
                         .background(Color.primeControlBg)
@@ -360,6 +364,7 @@ final class OrbConversationViewModel: ObservableObject {
   @Published var errorMessage: String?
   @Published var isInteractive: Bool = false
   @Published var userProfile: SupabaseManager.UserProfile?
+  @Published var userFirstName: String?
   @Published var microphoneDenied: Bool = false
   @Published var isArchivingSession: Bool = false
   @Published var lastArchiveError: String?
@@ -380,9 +385,13 @@ final class OrbConversationViewModel: ObservableObject {
   private var archivedConversationIds = Set<String>()
   
   func loadUserProfile() async {
+    // Get user's first name from auth (Sign In with Apple)
+    userFirstName = await SupabaseManager.shared.getCurrentUserFirstName()
+    
     do {
       userProfile = try await SupabaseManager.shared.fetchUserProfile()
-      print("✅ Loaded user profile: \(userProfile?.firstName ?? "Unknown")")
+      print("✅ Loaded user profile")
+      print("  - First name: \(userFirstName ?? "Unknown")")
     } catch {
       print("⚠️ Failed to load user profile: \(error)")
       errorMessage = "Failed to load profile data"
@@ -498,8 +507,8 @@ final class OrbConversationViewModel: ObservableObject {
       // Prepare dynamic variables to pass to the agent
       var dynamicVariables: [String: String] = [:]
       
-      // Add firstname from user profile if available
-      if let firstName = userProfile?.firstName {
+      // Add firstname from auth metadata if available
+      if let firstName = userFirstName {
         dynamicVariables["firstname"] = firstName
         print("📤 Passing dynamic variable to agent: firstname = \(firstName)")
       }
@@ -893,6 +902,7 @@ struct WarningBanner: View {
 struct PrimeChat: View {
   @StateObject private var viewModel = OrbConversationViewModel()
   @State private var showingDebugMenu = false
+  @State private var showingProfile = false
   
   // Use the Agent ID from config directly.
   private let agentId = Config.elevenLabsAgentId
@@ -984,20 +994,22 @@ struct PrimeChat: View {
           Spacer()
           
           // User Profile
-          if let firstName = viewModel.userProfile?.firstName {
-            Circle()
-              .fill(Color(red: 0.2, green: 0.2, blue: 0.2)) // Dark gray avatar
-              .frame(width: 36, height: 36)
-              .overlay(
-                Text(firstName.prefix(1).uppercased())
-                  .font(.system(size: 14, weight: .semibold))
-                  .foregroundColor(.white)
-              )
-          } else {
-            Circle()
-              .fill(Color.gray.opacity(0.2))
-              .frame(width: 36, height: 36)
-              .overlay(Image(systemName: "person.fill").foregroundColor(.gray))
+          Button(action: { showingProfile = true }) {
+            if let firstName = viewModel.userFirstName, !firstName.isEmpty {
+              Circle()
+                .fill(Color(red: 0.2, green: 0.2, blue: 0.2))
+                .frame(width: 36, height: 36)
+                .overlay(
+                  Text(firstName.prefix(1).uppercased())
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(.white)
+                )
+            } else {
+              Circle()
+                .fill(Color.gray.opacity(0.2))
+                .frame(width: 36, height: 36)
+                .overlay(Image(systemName: "person.fill").foregroundColor(.gray))
+            }
           }
         }
         .padding(.horizontal, 20)
@@ -1034,11 +1046,6 @@ struct PrimeChat: View {
                   )
                   .frame(width: 200, height: 200)
                   .shadow(color: Color.blue.opacity(0.1), radius: 20, x: 0, y: 10)
-                  .overlay(
-                    Image(systemName: "mic.fill")
-                      .font(.system(size: 40))
-                      .foregroundColor(.white.opacity(0.8))
-                  )
                   .onTapGesture {
                     Task {
                        await viewModel.toggleConversation(agentId: agentId)
@@ -1132,6 +1139,9 @@ struct PrimeChat: View {
           .transition(.move(edge: .top).combined(with: .opacity))
         }
       }
+    }
+    .sheet(isPresented: $showingProfile) {
+      ProfileView()
     }
     #if DEBUG
     .confirmationDialog("Debug Menu", isPresented: $showingDebugMenu, titleVisibility: .visible) {

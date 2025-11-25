@@ -10,22 +10,13 @@ import SwiftUI
 struct WelcomeIntroView: View {
   @ObservedObject var viewModel: OnboardingViewModel
 
-  private var greetingText: String {
-    let trimmedName = viewModel.firstName.trimmingCharacters(in: .whitespacesAndNewlines)
-    if trimmedName.isEmpty {
-      return "Nice to meet you!"
-    } else {
-      return "Nice to meet you, \(trimmedName)!"
-    }
-  }
-
   var body: some View {
     VStack(alignment: .leading, spacing: 24) {
       VStack(alignment: .leading, spacing: 16) {
         Text("👋")
           .font(.system(size: 40))
 
-        Text(greetingText)
+        Text("Welcome to Prime!")
           .font(.system(size: 24, weight: .semibold))
           .foregroundColor(Color(red: 0.13, green: 0.06, blue: 0.16))
           .multilineTextAlignment(.leading)

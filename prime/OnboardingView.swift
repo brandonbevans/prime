@@ -49,13 +49,11 @@ struct OnboardingView: View {
 
           Spacer(minLength: 0)
 
-          if viewModel.currentStep != .gender
-            && viewModel.currentStep != .goalRecency
+          if viewModel.currentStep != .goalRecency
             && viewModel.currentStep != .coachingStyle
             && viewModel.currentStep != .planCalculation
           {
-            if viewModel.currentStep == .microAction
-            {
+            if viewModel.currentStep == .microAction {
               HStack(spacing: 12) {
                 ContinueButtonView(
                   title: "Continue",
@@ -70,7 +68,7 @@ struct OnboardingView: View {
                   Circle()
                     .fill(
                       viewModel.isRecording
-                        ? Color(red: 0.39, green: 0.27, blue: 0.92)
+                        ? Color(red: 0.05, green: 0.09, blue: 0.16)
                         : Color.white.opacity(0.98)
                     )
                     .overlay(
@@ -81,14 +79,14 @@ struct OnboardingView: View {
                       .foregroundColor(
                         viewModel.isRecording
                           ? Color.white
-                          : Color(red: 0.39, green: 0.27, blue: 0.92))
+                          : Color(red: 0.05, green: 0.09, blue: 0.16))
                     )
                     .frame(width: 56, height: 56)
                     .overlay(
                       Circle()
                         .stroke(
                           viewModel.isRecording
-                            ? Color(red: 0.39, green: 0.27, blue: 0.92).opacity(0.3)
+                            ? Color(red: 0.05, green: 0.09, blue: 0.16).opacity(0.3)
                             : Color(red: 0.93, green: 0.93, blue: 0.93),
                           lineWidth: viewModel.isRecording ? 2 : 1
                         )
@@ -152,7 +150,7 @@ struct OnboardingView: View {
             }
           }
         }
-        
+
         Button("Force Sign Out & Clear Session", role: .destructive) {
           Task {
             do {
@@ -167,7 +165,7 @@ struct OnboardingView: View {
             }
           }
         }
-        
+
         Button("Check Session") {
           Task {
             do {
@@ -178,8 +176,8 @@ struct OnboardingView: View {
             }
           }
         }
-        
-        Button("Cancel", role: .cancel) { }
+
+        Button("Cancel", role: .cancel) {}
       } message: {
         Text("Developer options")
       }
@@ -189,14 +187,6 @@ struct OnboardingView: View {
   @ViewBuilder
   private var content: some View {
     switch viewModel.currentStep {
-    case .gender:
-      GenderSelectionView(viewModel: viewModel)
-    case .name:
-      NameInputView(viewModel: viewModel) {
-        handleContinue()
-      }
-    case .age:
-      AgeInputView(viewModel: viewModel)
     case .welcomeIntro:
       WelcomeIntroView(viewModel: viewModel)
     case .goalRecency:
@@ -215,6 +205,8 @@ struct OnboardingView: View {
       }
     case .coachingStyle:
       CoachingStyleSelectionView(viewModel: viewModel)
+    case .allDone:
+      AllDoneView()
     case .planCalculation:
       PlanCalculationView(viewModel: viewModel) {
         // Save onboarding data when plan calculation completes
@@ -237,18 +229,6 @@ struct OnboardingView: View {
     guard viewModel.canContinue else { return }
 
     switch viewModel.currentStep {
-    case .gender:
-      withAnimation {
-        viewModel.nextStep()
-      }
-    case .name:
-      withAnimation {
-        viewModel.nextStep()
-      }
-    case .age:
-      withAnimation {
-        viewModel.nextStep()
-      }
     case .welcomeIntro:
       withAnimation {
         viewModel.nextStep()
@@ -270,6 +250,10 @@ struct OnboardingView: View {
         viewModel.nextStep()
       }
     case .coachingStyle:
+      withAnimation {
+        viewModel.nextStep()
+      }
+    case .allDone:
       withAnimation {
         viewModel.nextStep()
       }

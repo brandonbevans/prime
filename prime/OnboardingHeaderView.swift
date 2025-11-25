@@ -23,8 +23,8 @@ struct OnboardingHeaderView: View {
                     .frame(width: 24, height: 24)
             }
             .buttonStyle(.plain)
-            .opacity(viewModel.currentStep == .gender ? 0 : 1)
-            .disabled(viewModel.currentStep == .gender)
+            .opacity(viewModel.currentStep == .welcomeIntro ? 0 : 1)
+            .disabled(viewModel.currentStep == .welcomeIntro)
             .contentShape(Rectangle())
             
             Spacer(minLength: 16)

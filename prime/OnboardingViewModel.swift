@@ -9,11 +9,6 @@ import Combine
 import Foundation
 import Speech
 
-enum Gender: String, CaseIterable {
-  case female = "Female"
-  case male = "Male"
-}
-
 enum Mood: String, CaseIterable {
   case calm = "Calm"
   case anxious = "Anxious"
@@ -91,16 +86,14 @@ enum MotivationShift: String, CaseIterable {
 }
 
 enum OnboardingStep: Int, CaseIterable {
-  case gender = 0
-  case name = 1
-  case age = 2
-  case welcomeIntro = 3
-  case goalRecency = 4
-  case goalWritingInfo = 5
-  case primaryGoal = 6
-  case microAction = 7
-  case coachingStyle = 8
-  case planCalculation = 9
+  case welcomeIntro = 0
+  case goalRecency = 1
+  case goalWritingInfo = 2
+  case primaryGoal = 3
+  case microAction = 4
+  case coachingStyle = 5
+  case allDone = 6
+  case planCalculation = 7
 
   var totalSteps: Int {
     OnboardingStep.allCases.count
@@ -109,10 +102,7 @@ enum OnboardingStep: Int, CaseIterable {
 
 @MainActor
 class OnboardingViewModel: ObservableObject {
-  @Published var currentStep: OnboardingStep = .gender
-  @Published var selectedGender: Gender?
-  @Published var firstName: String = ""
-  @Published var age: String = ""
+  @Published var currentStep: OnboardingStep = .welcomeIntro
   @Published var selectedGoalRecency: GoalRecency?
   @Published var primaryGoal: String = ""
   @Published var goalVisualization: String = ""
@@ -164,12 +154,6 @@ class OnboardingViewModel: ObservableObject {
         print("📥 Loading existing onboarding data...")
 
         // Restore saved values
-        if let genderString = profile.gender {
-          selectedGender = Gender(rawValue: genderString.capitalized)
-        }
-        firstName = profile.firstName != "User" ? profile.firstName : ""
-        age = profile.age > 18 ? "\(profile.age)" : ""
-
         if let recencyString = profile.goalRecency {
           selectedGoalRecency = mapDatabaseToGoalRecency(recencyString)
         }
@@ -222,12 +206,6 @@ class OnboardingViewModel: ObservableObject {
 
   var canContinue: Bool {
     switch currentStep {
-    case .gender:
-      return selectedGender != nil
-    case .name:
-      return !firstName.trimmingCharacters(in: .whitespaces).isEmpty
-    case .age:
-      return isValidAge
     case .welcomeIntro:
       return true
     case .goalRecency:
@@ -240,6 +218,8 @@ class OnboardingViewModel: ObservableObject {
       return !microAction.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     case .coachingStyle:
       return selectedCoachingStyle != nil
+    case .allDone:
+      return true
     case .planCalculation:
       return true
     }
@@ -332,14 +312,6 @@ class OnboardingViewModel: ObservableObject {
     }
   }
 
-  private var isValidAge: Bool {
-    let sanitized = age.filter { $0.isNumber }
-    guard let value = Int(sanitized) else {
-      return false
-    }
-    return value > 0 && value <= 120
-  }
-
   // MARK: - Supabase Integration
 
   /// Save current step data to Supabase (incremental save)
@@ -352,12 +324,6 @@ class OnboardingViewModel: ObservableObject {
 
     // Only save if we have meaningful data to save
     switch currentStep {
-    case .gender:
-      if selectedGender == nil { return }
-    case .name:
-      if firstName.isEmpty { return }
-    case .age:
-      if !isValidAge { return }
     case .goalRecency:
       if selectedGoalRecency == nil { return }
     case .primaryGoal:
@@ -373,14 +339,8 @@ class OnboardingViewModel: ObservableObject {
     print("💾 Auto-saving progress at step: \(currentStep)")
 
     do {
-      // Convert age string to Int
-      let ageInt = Int(age.filter { $0.isNumber }) ?? 0
-
       // Save current progress (will upsert if profile already exists)
       _ = try await supabaseManager.saveOnboardingData(
-        gender: selectedGender,
-        firstName: firstName.isEmpty ? "User" : firstName,
-        age: ageInt > 0 ? ageInt : 18,  // Default age if not set
         goalRecency: selectedGoalRecency,
         primaryGoal: primaryGoal.isEmpty ? "Not set yet" : primaryGoal,
         goalVisualization: goalVisualization.isEmpty ? "Not set yet" : goalVisualization,
@@ -402,22 +362,12 @@ class OnboardingViewModel: ObservableObject {
     saveError = nil
 
     do {
-      // Convert age string to Int
-      guard let ageInt = Int(age.filter { $0.isNumber }) else {
-        throw OnboardingError.invalidAge
-      }
-
       print("📝 Attempting to save onboarding data...")
-      print("  - Name: \(firstName)")
-      print("  - Age: \(ageInt)")
-      print("  - Gender: \(selectedGender?.rawValue ?? "nil")")
       print("  - Goal: \(primaryGoal)")
+      print("  - Coaching Style: \(selectedCoachingStyle?.rawValue ?? "nil")")
 
       // Save to Supabase
       let savedProfile = try await supabaseManager.saveOnboardingData(
-        gender: selectedGender,
-        firstName: firstName,
-        age: ageInt,
         goalRecency: selectedGoalRecency,
         primaryGoal: primaryGoal,
         goalVisualization: goalVisualization,
@@ -425,7 +375,7 @@ class OnboardingViewModel: ObservableObject {
         coachingStyle: selectedCoachingStyle
       )
 
-      print("✅ Successfully saved onboarding data for user: \(savedProfile.firstName)")
+      print("✅ Successfully saved onboarding data")
       print("  - Profile ID: \(savedProfile.id ?? -1)")
       print("  - User ID: \(savedProfile.userId)")
 
@@ -460,15 +410,3 @@ class OnboardingViewModel: ObservableObject {
   }
 }
 
-// MARK: - Custom Errors
-
-enum OnboardingError: LocalizedError {
-  case invalidAge
-
-  var errorDescription: String? {
-    switch self {
-    case .invalidAge:
-      return "Invalid age value"
-    }
-  }
-}

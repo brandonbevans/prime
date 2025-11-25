@@ -18,7 +18,7 @@ struct MicroActionInputView: View {
   var body: some View {
     ScrollView {
       VStack(alignment: .leading, spacing: 20) {
-        Text("How could you make 1% progress toward your goal?")
+        Text("What specifically could you do this week to make 1% progress toward your goal?")
           .font(.system(size: 24, weight: .semibold))
           .foregroundColor(Color(red: 0.13, green: 0.06, blue: 0.16))
           .multilineTextAlignment(.leading)

@@ -14,36 +14,84 @@ struct PlanCalculationView: View {
   private let animationDuration: TimeInterval = 10
 
   @State private var hasScheduledAdvance = false
-  @State private var animationProgress: Double = 0
+  @State private var startTime: Date?
   @State private var isComplete = false
+  @State private var currentStatusIndex = 0
+
+  private let statusMessages = [
+    "Analyzing your primary goal...",
+    "Creating a personalized success track...",
+    "Considering your preferred coaching style...",
+    "Putting it all together...",
+    "Finalizing your plan..."
+  ]
+
+  private let planItems = [
+    "Goal Clarity",
+    "Visualization Practice",
+    "Micro-Actions",
+    "Consistent Accountability",
+    "Self-Esteem Growth"
+  ]
 
   var body: some View {
-    VStack(alignment: .leading, spacing: 28) {
-      HourglassIllustration(progress: animationProgress)
-        .frame(width: 88, height: 88)
-        .padding(.top, 4)
+    VStack(spacing: 0) {
+      TimelineView(.animation(minimumInterval: 1.0 / 30.0, paused: isComplete)) { timeline in
+        let progress = calculateProgress(at: timeline.date)
+        let displayedPercentage = Int(progress * 100)
 
-      VStack(alignment: .leading, spacing: 14) {
-        Text(isComplete ? "Your Personal Plan Is Ready!" : "Calculating Your Plan…")
-          .font(.system(size: 24, weight: .semibold))
-          .foregroundColor(Color(red: 0.13, green: 0.06, blue: 0.16))
+        VStack(spacing: 0) {
+          Spacer()
+            .frame(height: 60)
 
-        Text(
-          isComplete
-            ? "Your personal plan is ready. It's time to invest in yourself. In this app we'll raise your self-esteem, teach you how to tap into the superconscious, and turn your brain into a goal-achieving machine."
-            : "Take a moment to reflect on how you're feeling in this very moment compared to when you started.\nDo you see how this process has lifted your spirits even just a little bit?\nThis is the power of visualization and goal setting at work.\nIt is a skill in of itself, and that was is what we'll continue to develop in the coming weeks."
-        )
-        .font(.system(size: 16))
-        .foregroundColor(Color(red: 0.25, green: 0.22, blue: 0.32))
-        .lineSpacing(6)
-        .multilineTextAlignment(.leading)
+          // Large percentage display
+          Text("\(displayedPercentage)%")
+            .font(.system(size: 72, weight: .bold, design: .rounded))
+            .foregroundColor(Color(red: 0.12, green: 0.1, blue: 0.16))
+            .contentTransition(.numericText())
 
-        Text("\(Int(animationProgress * 100))% complete")
-          .font(.system(size: 14, weight: .medium))
-          .foregroundColor(Color(red: 0.36, green: 0.33, blue: 0.46))
+          // Headline
+          Text(isComplete ? "Your Plan Is Ready!" : "We're setting\neverything up for you")
+            .font(.system(size: 28, weight: .semibold))
+            .foregroundColor(Color(red: 0.12, green: 0.1, blue: 0.16))
+            .multilineTextAlignment(.center)
+            .padding(.top, 8)
+
+          // Progress bar
+          ProgressBarView(progress: progress)
+            .frame(height: 10)
+            .padding(.horizontal, 32)
+            .padding(.top, 40)
+
+          // Status text
+          Text(isComplete ? "Complete!" : statusMessages[currentStatusIndex])
+            .font(.system(size: 16))
+            .foregroundColor(Color(red: 0.4, green: 0.38, blue: 0.45))
+            .padding(.top, 16)
+
+          Spacer()
+            .frame(height: 48)
+
+          // Card with plan items
+          PlanItemsCard(items: planItems)
+            .padding(.horizontal, 24)
+
+          Spacer()
+        }
+      }
+
+      // Get Started button - appears when complete
+      if isComplete {
+        ContinueButtonView(title: "Get Started", isEnabled: true) {
+          onComplete()
+        }
+        .padding(.horizontal, 24)
+        .padding(.bottom, 32)
+        .transition(.opacity.combined(with: .move(edge: .bottom)))
       }
     }
-    .frame(maxWidth: .infinity, alignment: .leading)
+    .frame(maxWidth: .infinity, maxHeight: .infinity)
+    .animation(.easeInOut(duration: 0.4), value: isComplete)
     .onAppear {
       startAnimationAndAdvance()
     }
@@ -54,120 +102,114 @@ struct PlanCalculationView: View {
     }
   }
 
+  private func calculateProgress(at date: Date) -> Double {
+    guard let start = startTime else { return 0 }
+    let elapsed = date.timeIntervalSince(start)
+    let raw = elapsed / animationDuration
+    // Ease-out curve for more natural feel
+    let eased = 1 - pow(1 - min(raw, 1), 2)
+    return eased
+  }
+
   private func startAnimationAndAdvance() {
     guard !hasScheduledAdvance else { return }
     hasScheduledAdvance = true
-    animationProgress = 0
+    startTime = Date()
     isComplete = false
+    currentStatusIndex = 0
 
-    withAnimation(.linear(duration: animationDuration)) {
-      animationProgress = 1
+    // Cycle through status messages
+    let messageInterval = animationDuration / Double(statusMessages.count)
+    for i in 0..<statusMessages.count {
+      DispatchQueue.main.asyncAfter(deadline: .now() + messageInterval * Double(i)) {
+        guard viewModel.currentStep == .planCalculation else { return }
+        withAnimation(.easeInOut(duration: 0.3)) {
+          currentStatusIndex = i
+        }
+      }
     }
 
+    // Complete - show the Get Started button
     DispatchQueue.main.asyncAfter(deadline: .now() + animationDuration) {
       guard viewModel.currentStep == .planCalculation else { return }
-      isComplete = true
-      onComplete()
+      withAnimation(.easeInOut(duration: 0.3)) {
+        isComplete = true
+      }
       hasScheduledAdvance = false
     }
   }
 }
 
-private struct HourglassIllustration: View {
+// MARK: - Progress Bar
+
+private struct ProgressBarView: View {
   let progress: Double
 
-  private var rotationAngle: Angle {
-    let phase = progress * .pi * 2
-    let bounce = sin(phase)
-
-    // Base: 2 full rotations over the animation (twice as fast as before)
-    let baseRotations = 2.0
-
-    // Speed up rotation as we approach the apex of the bounce (|bounce| -> 1)
-    let speedFactor = 1.0 + 1.5 * abs(bounce)  // 1x to 2.5x
-
-    let degrees = progress * baseRotations * 360 * speedFactor
-    return .degrees(degrees)
-  }
-
-  private var bounceOffset: CGFloat {
-    // Gentle bounce up and down over time
-    let phase = progress * .pi * 2
-    return -10 * CGFloat(sin(phase))
-  }
-
   var body: some View {
-    ZStack {
-      RoundedRectangle(cornerRadius: 28)
-        .fill(
-          LinearGradient(
-            colors: [
-              Color(red: 0.93, green: 0.89, blue: 1.0),
-              Color(red: 0.83, green: 0.94, blue: 1.0),
-            ],
-            startPoint: .topLeading,
-            endPoint: .bottomTrailing
-          )
-        )
-        .overlay(
-          RoundedRectangle(cornerRadius: 28)
-            .stroke(Color.white.opacity(0.6), lineWidth: 1)
-        )
-
-      VStack(spacing: 12) {
-        HourglassShape()
-          .stroke(Color(red: 0.33, green: 0.24, blue: 0.64), lineWidth: 3.5)
-          .frame(width: 36, height: 48)
-          .overlay(
-            HourglassFill()
-              .fill(Color(red: 0.41, green: 0.3, blue: 0.78))
-              .frame(width: 28, height: 34)
-              .offset(y: 6)
-          )
-
+    GeometryReader { geometry in
+      ZStack(alignment: .leading) {
+        // Background track
         Capsule()
-          .fill(Color(red: 0.56, green: 0.67, blue: 1.0).opacity(0.9))
-          .frame(width: 42, height: 6)
+          .fill(Color(red: 0.92, green: 0.92, blue: 0.94))
+
+        // Filled portion with gradient
+        Capsule()
+          .fill(
+            LinearGradient(
+              colors: [
+                Color(red: 0.25, green: 0.42, blue: 0.96),
+                Color(red: 0.45, green: 0.58, blue: 1.0)
+              ],
+              startPoint: .leading,
+              endPoint: .trailing
+            )
+          )
+          .frame(width: max(geometry.size.width * progress, 10))
       }
     }
-    .rotationEffect(rotationAngle)
-    .offset(y: bounceOffset)
   }
 }
 
-private struct HourglassShape: Shape {
-  func path(in rect: CGRect) -> Path {
-    var path = Path()
-    let neckWidth = rect.width * 0.3
-    let midY = rect.midY
+// MARK: - Plan Items Card
 
-    path.move(to: CGPoint(x: rect.minX, y: rect.minY))
-    path.addLine(to: CGPoint(x: rect.maxX, y: rect.minY))
-    path.addLine(to: CGPoint(x: rect.midX + neckWidth / 2, y: midY))
-    path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
-    path.addLine(to: CGPoint(x: rect.minX, y: rect.maxY))
-    path.addLine(to: CGPoint(x: rect.midX - neckWidth / 2, y: midY))
-    path.closeSubpath()
-    return path
-  }
-}
+private struct PlanItemsCard: View {
+  let items: [String]
 
-private struct HourglassFill: Shape {
-  func path(in rect: CGRect) -> Path {
-    var path = Path()
-    let midY = rect.midY
+  var body: some View {
+    VStack(alignment: .leading, spacing: 14) {
+      Text("Personal plan for")
+        .font(.system(size: 17, weight: .semibold))
+        .foregroundColor(Color(red: 0.12, green: 0.1, blue: 0.16))
 
-    path.move(to: CGPoint(x: rect.minX, y: midY))
-    path.addLine(to: CGPoint(x: rect.midX, y: rect.minY))
-    path.addLine(to: CGPoint(x: rect.maxX, y: midY))
-    path.addLine(to: CGPoint(x: rect.midX, y: rect.maxY))
-    path.closeSubpath()
-    return path
+      VStack(alignment: .leading, spacing: 10) {
+        ForEach(items, id: \.self) { item in
+          HStack(spacing: 10) {
+            Image(systemName: "checkmark.circle.fill")
+              .font(.system(size: 14))
+              .foregroundColor(Color(red: 0.25, green: 0.42, blue: 0.96))
+
+            Text(item)
+              .font(.system(size: 15))
+              .foregroundColor(Color(red: 0.12, green: 0.1, blue: 0.16))
+          }
+        }
+      }
+    }
+    .padding(20)
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .background(
+      RoundedRectangle(cornerRadius: 16)
+        .fill(Color.white)
+        .shadow(color: Color.black.opacity(0.06), radius: 12, x: 0, y: 4)
+    )
+    .overlay(
+      RoundedRectangle(cornerRadius: 16)
+        .stroke(Color(red: 0.92, green: 0.92, blue: 0.94), lineWidth: 1)
+    )
   }
 }
 
 #Preview {
   PlanCalculationView(viewModel: OnboardingViewModel(), onComplete: {})
-    .padding(20)
-    .background(Color.white)
+    .background(Color(red: 0.98, green: 0.98, blue: 0.99))
 }
