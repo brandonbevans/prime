@@ -203,6 +203,270 @@ class SupabaseManager: ObservableObject {
     }
   }
 
+  // MARK: - Chat Conversations & Messages
+
+  struct ChatConversation: Codable {
+    let id: UUID?
+    let userId: UUID
+    let createdAt: Date?
+    let updatedAt: Date?
+    let title: String?
+    let modelName: String?
+    let isArchived: Bool?
+
+    enum CodingKeys: String, CodingKey {
+      case id
+      case userId = "user_id"
+      case createdAt = "created_at"
+      case updatedAt = "updated_at"
+      case title
+      case modelName = "model_name"
+      case isArchived = "is_archived"
+    }
+  }
+
+  struct ChatMessageRecord: Codable {
+    let id: UUID?
+    let conversationId: UUID
+    let userId: UUID
+    let createdAt: Date?
+    let role: String
+    let content: String
+    let tokensUsed: Int?
+    let modelName: String?
+
+    enum CodingKeys: String, CodingKey {
+      case id
+      case conversationId = "conversation_id"
+      case userId = "user_id"
+      case createdAt = "created_at"
+      case role
+      case content
+      case tokensUsed = "tokens_used"
+      case modelName = "model_name"
+    }
+  }
+
+  /// Create a new chat conversation
+  func createChatConversation(title: String? = nil, modelName: String = "gemini-2.5-flash") async throws -> ChatConversation {
+    let userId = try await getCurrentUserId()
+
+    let conversation = ChatConversation(
+      id: nil,
+      userId: userId,
+      createdAt: nil,
+      updatedAt: nil,
+      title: title,
+      modelName: modelName,
+      isArchived: false
+    )
+
+    let response: PostgrestResponse<ChatConversation> =
+      try await client
+      .from("chat_conversations")
+      .insert(conversation)
+      .select()
+      .single()
+      .execute()
+
+    print("✅ Created chat conversation: \(response.value.id?.uuidString ?? "unknown")")
+    return response.value
+  }
+
+  /// Save a chat message to an existing conversation
+  func saveChatMessage(
+    conversationId: UUID,
+    role: String,
+    content: String,
+    modelName: String? = nil
+  ) async throws -> ChatMessageRecord {
+    let userId = try await getCurrentUserId()
+
+    let message = ChatMessageRecord(
+      id: nil,
+      conversationId: conversationId,
+      userId: userId,
+      createdAt: nil,
+      role: role,
+      content: content,
+      tokensUsed: nil,
+      modelName: modelName
+    )
+
+    let response: PostgrestResponse<ChatMessageRecord> =
+      try await client
+      .from("chat_messages")
+      .insert(message)
+      .select()
+      .single()
+      .execute()
+
+    return response.value
+  }
+
+  /// Fetch all conversations for the current user
+  func fetchChatConversations(includeArchived: Bool = false) async throws -> [ChatConversation] {
+    let userId = try await getCurrentUserId()
+
+    var query = client
+      .from("chat_conversations")
+      .select()
+      .eq("user_id", value: userId.uuidString)
+      .order("updated_at", ascending: false)
+
+    if !includeArchived {
+      query = query.eq("is_archived", value: false)
+    }
+
+    let response: PostgrestResponse<[ChatConversation]> = try await query.execute()
+    return response.value
+  }
+
+  /// Fetch messages for a specific conversation
+  func fetchChatMessages(conversationId: UUID) async throws -> [ChatMessageRecord] {
+    let response: PostgrestResponse<[ChatMessageRecord]> =
+      try await client
+      .from("chat_messages")
+      .select()
+      .eq("conversation_id", value: conversationId.uuidString)
+      .order("created_at", ascending: true)
+      .execute()
+
+    return response.value
+  }
+
+  /// Update conversation title
+  func updateConversationTitle(conversationId: UUID, title: String) async throws {
+    struct TitleUpdate: Encodable {
+      let title: String
+    }
+
+    try await client
+      .from("chat_conversations")
+      .update(TitleUpdate(title: title))
+      .eq("id", value: conversationId.uuidString)
+      .execute()
+  }
+
+  /// Archive a conversation
+  func archiveConversation(conversationId: UUID) async throws {
+    struct ArchiveUpdate: Encodable {
+      let is_archived: Bool
+    }
+
+    try await client
+      .from("chat_conversations")
+      .update(ArchiveUpdate(is_archived: true))
+      .eq("id", value: conversationId.uuidString)
+      .execute()
+  }
+
+  // MARK: - User Notes (AI-generated insights)
+
+  struct UserNote: Codable {
+    let id: UUID?
+    let userId: UUID
+    let createdAt: Date?
+    let updatedAt: Date?
+    let category: String
+    let content: String
+    let sourceConversationId: UUID?
+    let isActive: Bool?
+    let importance: Int?
+
+    enum CodingKeys: String, CodingKey {
+      case id
+      case userId = "user_id"
+      case createdAt = "created_at"
+      case updatedAt = "updated_at"
+      case category
+      case content
+      case sourceConversationId = "source_conversation_id"
+      case isActive = "is_active"
+      case importance
+    }
+  }
+
+  /// Fetch all active notes for the current user
+  func fetchUserNotes(categories: [String]? = nil) async throws -> [UserNote] {
+    let userId = try await getCurrentUserId()
+
+    var query = client
+      .from("user_notes")
+      .select()
+      .eq("user_id", value: userId.uuidString)
+      .eq("is_active", value: true)
+      .order("importance", ascending: false)
+      .order("created_at", ascending: false)
+
+    let response: PostgrestResponse<[UserNote]> = try await query.execute()
+    
+    // Filter by categories if specified
+    if let categories = categories {
+      return response.value.filter { categories.contains($0.category) }
+    }
+    return response.value
+  }
+
+  /// Save a new note about the user
+  func saveUserNote(
+    category: String,
+    content: String,
+    conversationId: UUID? = nil,
+    importance: Int = 2
+  ) async throws -> UserNote {
+    let userId = try await getCurrentUserId()
+
+    let note = UserNote(
+      id: nil,
+      userId: userId,
+      createdAt: nil,
+      updatedAt: nil,
+      category: category,
+      content: content,
+      sourceConversationId: conversationId,
+      isActive: true,
+      importance: importance
+    )
+
+    let response: PostgrestResponse<UserNote> =
+      try await client
+      .from("user_notes")
+      .insert(note)
+      .select()
+      .single()
+      .execute()
+
+    print("📝 Saved user note: [\(category)] \(content.prefix(50))...")
+    return response.value
+  }
+
+  /// Deactivate a note (soft delete)
+  func deactivateNote(noteId: UUID) async throws {
+    struct DeactivateUpdate: Encodable {
+      let is_active: Bool
+    }
+
+    try await client
+      .from("user_notes")
+      .update(DeactivateUpdate(is_active: false))
+      .eq("id", value: noteId.uuidString)
+      .execute()
+  }
+
+  /// Update note importance
+  func updateNoteImportance(noteId: UUID, importance: Int) async throws {
+    struct ImportanceUpdate: Encodable {
+      let importance: Int
+    }
+
+    try await client
+      .from("user_notes")
+      .update(ImportanceUpdate(importance: min(5, max(1, importance))))
+      .eq("id", value: noteId.uuidString)
+      .execute()
+  }
+
   // MARK: - Session Records
 
   struct SessionRecord: Codable {

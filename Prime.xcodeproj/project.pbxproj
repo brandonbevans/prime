@@ -11,6 +11,11 @@
 		60C80DF62EC2857B00090352 /* SuperwallKit in Frameworks */ = {isa = PBXBuildFile; productRef = 60C80DF52EC2857B00090352 /* SuperwallKit */; };
 		60D0C0012F2A5B120044D7C0 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = 60D0C0022F2A5B120044D7C0 /* Supabase */; };
 		60D6B0022F3C2E8700B3F6F0 /* Resources/Audio/BackgroundLoop.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = 60D6B0012F3C2E8700B3F6F0 /* Resources/Audio/BackgroundLoop.mp4 */; };
+		60F676A72ED6001E008B10BE /* FirebaseAI in Frameworks */ = {isa = PBXBuildFile; productRef = 60F676A62ED6001E008B10BE /* FirebaseAI */; };
+		60F676A92ED6001E008B10BE /* FirebaseAILogic in Frameworks */ = {isa = PBXBuildFile; productRef = 60F676A82ED6001E008B10BE /* FirebaseAILogic */; };
+		60F676AB2ED6001E008B10BE /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 60F676AA2ED6001E008B10BE /* FirebaseAnalytics */; };
+		60F676AD2ED6001E008B10BE /* FirebaseAnalyticsCore in Frameworks */ = {isa = PBXBuildFile; productRef = 60F676AC2ED6001E008B10BE /* FirebaseAnalyticsCore */; };
+		60F676AF2ED6001E008B10BE /* FirebaseAnalyticsIdentitySupport in Frameworks */ = {isa = PBXBuildFile; productRef = 60F676AE2ED6001E008B10BE /* FirebaseAnalyticsIdentitySupport */; };
 		60F9E6DF2ECBB6EB00B85991 /* Auth in Frameworks */ = {isa = PBXBuildFile; productRef = 60F9E6DE2ECBB6EB00B85991 /* Auth */; };
 		60F9E6E12ECBB6EB00B85991 /* Functions in Frameworks */ = {isa = PBXBuildFile; productRef = 60F9E6E02ECBB6EB00B85991 /* Functions */; };
 		60F9E6E32ECBB6EB00B85991 /* PostgREST in Frameworks */ = {isa = PBXBuildFile; productRef = 60F9E6E22ECBB6EB00B85991 /* PostgREST */; };
@@ -39,14 +44,19 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				60F676A92ED6001E008B10BE /* FirebaseAILogic in Frameworks */,
 				60C80DF62EC2857B00090352 /* SuperwallKit in Frameworks */,
 				60D0C0012F2A5B120044D7C0 /* Supabase in Frameworks */,
 				60F9E6E72ECBB6EB00B85991 /* Storage in Frameworks */,
+				60F676AB2ED6001E008B10BE /* FirebaseAnalytics in Frameworks */,
+				60F676AD2ED6001E008B10BE /* FirebaseAnalyticsCore in Frameworks */,
 				60F9E7642ECBE39C00B85991 /* ElevenLabs in Frameworks */,
 				60F9E6E12ECBB6EB00B85991 /* Functions in Frameworks */,
 				602E2C5B2ECBFFEA009CEC19 /* JWTKit in Frameworks */,
 				60F9E6E52ECBB6EB00B85991 /* Realtime in Frameworks */,
 				60F9E7672ECBE71200B85991 /* LiveKit in Frameworks */,
+				60F676AF2ED6001E008B10BE /* FirebaseAnalyticsIdentitySupport in Frameworks */,
+				60F676A72ED6001E008B10BE /* FirebaseAI in Frameworks */,
 				60F9E6DF2ECBB6EB00B85991 /* Auth in Frameworks */,
 				60F9E6E32ECBB6EB00B85991 /* PostgREST in Frameworks */,
 			);
@@ -111,6 +121,11 @@
 				60F9E7632ECBE39C00B85991 /* ElevenLabs */,
 				60F9E7662ECBE71200B85991 /* LiveKit */,
 				602E2C5A2ECBFFEA009CEC19 /* JWTKit */,
+				60F676A62ED6001E008B10BE /* FirebaseAI */,
+				60F676A82ED6001E008B10BE /* FirebaseAILogic */,
+				60F676AA2ED6001E008B10BE /* FirebaseAnalytics */,
+				60F676AC2ED6001E008B10BE /* FirebaseAnalyticsCore */,
+				60F676AE2ED6001E008B10BE /* FirebaseAnalyticsIdentitySupport */,
 			);
 			productName = prime;
 			productReference = 60FFAB1E2EC221610044D7C0 /* Prime.app */;
@@ -146,6 +161,7 @@
 				60F9E7622ECBE39C00B85991 /* XCRemoteSwiftPackageReference "elevenlabs-swift-sdk" */,
 				60F9E7652ECBE71200B85991 /* XCRemoteSwiftPackageReference "client-sdk-swift" */,
 				602E2C592ECBFFEA009CEC19 /* XCRemoteSwiftPackageReference "jwt-kit" */,
+				60F676A52ED6001E008B10BE /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 60FFAB1F2EC221610044D7C0 /* Products */;
@@ -243,7 +259,7 @@
 				SDKROOT = iphoneos;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SUPABASE_ANON_KEY = sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH;
-				SUPABASE_URL = "http://192.168.50.17:54321";
+				SUPABASE_URL = "http://127.0.0.1:54321";
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
@@ -450,6 +466,14 @@
 				minimumVersion = 2.0.0;
 			};
 		};
+		60F676A52ED6001E008B10BE /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 12.6.0;
+			};
+		};
 		60F9E7622ECBE39C00B85991 /* XCRemoteSwiftPackageReference "elevenlabs-swift-sdk" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/elevenlabs/elevenlabs-swift-sdk.git";
@@ -483,6 +507,31 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 60D0C0032F2A5B120044D7C0 /* XCRemoteSwiftPackageReference "supabase-swift" */;
 			productName = Supabase;
+		};
+		60F676A62ED6001E008B10BE /* FirebaseAI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 60F676A52ED6001E008B10BE /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAI;
+		};
+		60F676A82ED6001E008B10BE /* FirebaseAILogic */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 60F676A52ED6001E008B10BE /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAILogic;
+		};
+		60F676AA2ED6001E008B10BE /* FirebaseAnalytics */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 60F676A52ED6001E008B10BE /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAnalytics;
+		};
+		60F676AC2ED6001E008B10BE /* FirebaseAnalyticsCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 60F676A52ED6001E008B10BE /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAnalyticsCore;
+		};
+		60F676AE2ED6001E008B10BE /* FirebaseAnalyticsIdentitySupport */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 60F676A52ED6001E008B10BE /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAnalyticsIdentitySupport;
 		};
 		60F9E6DE2ECBB6EB00B85991 /* Auth */ = {
 			isa = XCSwiftPackageProductDependency;

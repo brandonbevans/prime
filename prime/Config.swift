@@ -70,6 +70,13 @@ struct Config {
      // Return empty string if not found to allow app to run, but feature might fail
     return Bundle.main.object(forInfoDictionaryKey: "ELEVENLABS_VOICE_ID") as? String ?? ""
   }
+  
+  /// Google Gemini API Key (for Firebase AI Logic)
+  /// Note: When using Firebase AI Logic, you typically don't need an API key
+  /// as Firebase handles authentication. This is provided for direct API access.
+  static var geminiApiKey: String {
+    return Bundle.main.object(forInfoDictionaryKey: "GEMINI_API_KEY") as? String ?? ""
+  }
 
   /// Validate that the configuration has been set
   static var isConfigured: Bool {

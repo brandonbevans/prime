@@ -27,7 +27,7 @@ struct ContentView: View {
       } else if isAuthenticated {
         // User is authenticated, check if onboarding is complete
         if hasCompletedOnboarding {
-          PrimeChat()
+          PrimeChat2()
         } else {
           OnboardingView()
             .onReceive(NotificationCenter.default.publisher(for: .onboardingCompleted)) { _ in
