@@ -683,10 +683,6 @@ struct ChatInputView: View {
     let onSend: () -> Void
     @FocusState.Binding var isFocused: Bool
     @StateObject private var speechManager = SpeechRecognitionManager()
-    @State private var textEditorHeight: CGFloat = 40
-    
-    private let minHeight: CGFloat = 40
-    private let maxHeight: CGFloat = 120
     
     var body: some View {
         VStack(spacing: 0) {
@@ -721,7 +717,7 @@ struct ChatInputView: View {
                         if !speechManager.transcribedText.isEmpty {
                             if messageText.isEmpty {
                                 messageText = speechManager.transcribedText
-    } else {
+                            } else {
                                 messageText += " " + speechManager.transcribedText
                             }
                             speechManager.clearTranscription()
@@ -736,35 +732,21 @@ struct ChatInputView: View {
                         .foregroundColor(speechManager.isRecording ? .red : .gray)
                         .frame(width: 36, height: 36)
                         .background(speechManager.isRecording ? Color.red.opacity(0.1) : Color.clear)
-                        .cornerRadius(18)
+                        .clipShape(Circle())
                 }
                 .disabled(!speechManager.isAuthorized || isLoading)
-                .padding(.bottom, 4)
+                .padding(.bottom, 3) // Aligned with text field
                 
-                // Multi-line text input
-                ZStack(alignment: .topLeading) {
-                    // Placeholder
-                    if messageText.isEmpty {
-                        Text("Type or tap mic to speak...")
-                            .foregroundColor(.gray.opacity(0.6))
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 12)
-                    }
-                    
-                    // Expanding text editor
-                    TextEditor(text: $messageText)
-                        .font(.body)
-                        .foregroundColor(.black)
-                        .scrollContentBackground(.hidden)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 8)
-                        .frame(minHeight: minHeight, maxHeight: maxHeight)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .focused($isFocused)
-                        .disabled(isLoading)
-                }
-                .background(Color.primeControlBg)
-                .cornerRadius(20)
+                // Text input
+                TextField("Type or tap mic to speak...", text: $messageText, axis: .vertical)
+                    .font(.body)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 10)
+                    .background(Color.primeControlBg)
+                    .clipShape(RoundedRectangle(cornerRadius: 20))
+                    .lineLimit(1...5)
+                    .focused($isFocused)
+                    .disabled(isLoading)
                 
                 Button(action: onSend) {
                     if isLoading {
@@ -775,12 +757,15 @@ struct ChatInputView: View {
                         Image(systemName: "paperplane.circle.fill")
                             .font(.system(size: 32))
                             .foregroundColor(messageText.isEmpty ? .gray : .primePrimaryText)
+                            .background(Color.white)
+                            .clipShape(Circle())
                     }
                 }
                 .disabled(messageText.isEmpty || isLoading)
-                .padding(.bottom, 4)
+                .padding(.bottom, 5) // Aligned with text field
             }
-            .padding()
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
         }
         .background(Color.white)
         .overlay(

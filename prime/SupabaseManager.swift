@@ -575,6 +575,26 @@ class SupabaseManager: ObservableObject {
       throw error
     }
   }
+  
+  /// Delete the current user's account and all associated data
+  func deleteAccount() async throws {
+    let userId = try await getCurrentUserId()
+    
+    print("🗑️ Deleting account for user: \(userId)")
+    
+    // Call the database function that handles all deletions including auth.users
+    // This function runs with SECURITY DEFINER privileges
+    try await client
+      .rpc("delete_user_account")
+      .execute()
+    
+    print("✅ Account and all data deleted from database")
+    
+    // Clear the local session (user is already deleted from auth.users)
+    try? await client.auth.signOut(scope: .local)
+    
+    print("✅ Account deletion complete")
+  }
 
   /// Force clear all session data (debug only)
   func forceClearSession() {

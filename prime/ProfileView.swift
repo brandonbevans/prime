@@ -14,8 +14,16 @@ struct ProfileView: View {
   @State private var selectedCoachingStyle: CoachingStyle?
   @State private var isLoading = true
   @State private var isSaving = false
-  @State private var showingSignOutConfirmation = false
+  @State private var activeAlert: ActiveAlert?
+  @State private var isDeleting = false
   @State private var errorMessage: String?
+  
+  enum ActiveAlert: Identifiable {
+    case signOut
+    case deleteAccount
+    
+    var id: Self { self }
+  }
   
   var body: some View {
     NavigationView {
@@ -36,6 +44,10 @@ struct ProfileView: View {
             
             // Sign Out Button
             signOutButton
+            
+            // Delete Account Button
+            deleteAccountButton
+              .padding(.top, 12)
           }
           .padding(.horizontal, 20)
           .padding(.bottom, 40)
@@ -57,13 +69,27 @@ struct ProfileView: View {
           .foregroundColor(Color(red: 0.2, green: 0.2, blue: 0.25))
         }
       }
-      .alert("Sign Out", isPresented: $showingSignOutConfirmation) {
-        Button("Cancel", role: .cancel) { }
-        Button("Sign Out", role: .destructive) {
-          signOut()
+      .alert(item: $activeAlert) { alert in
+        switch alert {
+        case .signOut:
+          Alert(
+            title: Text("Sign Out"),
+            message: Text("Are you sure you want to sign out?"),
+            primaryButton: .cancel(),
+            secondaryButton: .destructive(Text("Sign Out")) {
+              signOut()
+            }
+          )
+        case .deleteAccount:
+          Alert(
+            title: Text("Delete Account"),
+            message: Text("Are you sure you want to delete your account? This action cannot be undone and all your data will be permanently removed."),
+            primaryButton: .cancel(),
+            secondaryButton: .destructive(Text("Delete Account")) {
+              deleteAccount()
+            }
+          )
         }
-      } message: {
-        Text("Are you sure you want to sign out?")
       }
       .task {
         await loadProfile()
@@ -154,7 +180,7 @@ struct ProfileView: View {
   
   private var signOutButton: some View {
     Button(action: {
-      showingSignOutConfirmation = true
+      activeAlert = .signOut
     }) {
       HStack {
         Image(systemName: "rectangle.portrait.and.arrow.right")
@@ -169,6 +195,37 @@ struct ProfileView: View {
       .cornerRadius(14)
       .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 2)
     }
+  }
+  
+  // MARK: - Delete Account Button
+  
+  private var deleteAccountButton: some View {
+    Button(action: {
+      activeAlert = .deleteAccount
+    }) {
+      HStack {
+        if isDeleting {
+          ProgressView()
+            .scaleEffect(0.8)
+            .tint(Color(red: 0.6, green: 0.2, blue: 0.2))
+        } else {
+          Image(systemName: "trash")
+            .font(.system(size: 18))
+        }
+        Text(isDeleting ? "Deleting..." : "Delete Account")
+          .font(.system(size: 16, weight: .medium))
+      }
+      .foregroundColor(Color(red: 0.6, green: 0.2, blue: 0.2))
+      .frame(maxWidth: .infinity)
+      .padding(.vertical, 16)
+      .background(Color(red: 1.0, green: 0.95, blue: 0.95))
+      .cornerRadius(14)
+      .overlay(
+        RoundedRectangle(cornerRadius: 14)
+          .stroke(Color(red: 0.6, green: 0.2, blue: 0.2).opacity(0.3), lineWidth: 1)
+      )
+    }
+    .disabled(isDeleting)
   }
   
   // MARK: - Actions
@@ -223,6 +280,23 @@ struct ProfileView: View {
       } catch {
         print("❌ Sign out failed: \(error)")
         errorMessage = "Sign out failed. Please try again."
+      }
+    }
+  }
+  
+  private func deleteAccount() {
+    isDeleting = true
+    errorMessage = nil
+    
+    Task {
+      do {
+        try await SupabaseManager.shared.deleteAccount()
+        NotificationCenter.default.post(name: .debugAuthCompleted, object: nil)
+        dismiss()
+      } catch {
+        print("❌ Delete account failed: \(error)")
+        errorMessage = "Failed to delete account. Please try again."
+        isDeleting = false
       }
     }
   }
