@@ -329,6 +329,28 @@ class SupabaseManager: ObservableObject {
       return response.value
     }
   }
+    
+  /// Check if user has any conversations created today (before the current one)
+  func countTodaysConversations() async throws -> Int {
+    let userId = try await getCurrentUserId()
+    
+    // Get start of today in UTC
+    let calendar = Calendar.current
+    let startOfToday = calendar.startOfDay(for: Date())
+    
+    let formatter = ISO8601DateFormatter()
+    formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+    let startOfTodayString = formatter.string(from: startOfToday)
+    
+    let response: PostgrestResponse<[ChatConversation]> = try await client
+      .from("chat_conversations")
+      .select()
+      .eq("user_id", value: userId.uuidString)
+      .gte("created_at", value: startOfTodayString)
+      .execute()
+    
+    return response.value.count
+  }
 
   /// Fetch messages for a specific conversation
   func fetchChatMessages(conversationId: UUID) async throws -> [ChatMessageRecord] {

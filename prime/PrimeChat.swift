@@ -17,6 +17,7 @@ struct ChatMessage: Identifiable, Equatable {
     let role: ChatRole
     let content: String
     let timestamp: Date
+    var isPreloaded: Bool = false  // True for messages loaded from history (no typewriter)
     
     enum ChatRole {
         case user
@@ -33,7 +34,7 @@ final class GeminiChatViewModel: ObservableObject {
     @Published var errorMessage: String?
     @Published var userProfile: SupabaseManager.UserProfile?
     @Published var userFirstName: String?
-    @Published var isStreamingEnabled: Bool = true  // Disable for loaded conversations
+    @Published var isStreamingEnabled: Bool = true  // Global toggle for typewriter effect
     @Published var shouldScrollToBottom: Bool = false  // Trigger scroll after loading conversation
     
     private var chat: Chat?
@@ -41,6 +42,7 @@ final class GeminiChatViewModel: ObservableObject {
     private(set) var conversationId: UUID?
     private let modelName = "gemini-2.5-flash"
     private var userNotes: [SupabaseManager.UserNote] = []
+    private var isFirstChatOfDay: Bool = true  // Track if this is the user's first chat today
     
     // Function declaration for saving user notes - Gemini will call this when it notices something important
     private let saveUserNoteTool = FunctionDeclaration(
@@ -125,6 +127,9 @@ final class GeminiChatViewModel: ObservableObject {
     func loadUserProfile() async {
         userFirstName = await SupabaseManager.shared.getCurrentUserFirstName()
         
+        // Check if this is the first conversation of the day BEFORE creating the new one
+        await checkIfFirstChatOfDay()
+        
         // Create a new conversation in Supabase
         await createConversation()
         
@@ -141,6 +146,19 @@ final class GeminiChatViewModel: ObservableObject {
             print("⚠️ Failed to load user profile: \(error)")
             // Still send greeting even if profile fails
             await sendInitialGreeting()
+        }
+    }
+    
+    /// Check if there are any conversations from today (determines greeting style)
+    private func checkIfFirstChatOfDay() async {
+        do {
+            let todaysCount = try await SupabaseManager.shared.countTodaysConversations()
+            isFirstChatOfDay = todaysCount == 0
+            print("📅 Today's conversation count: \(todaysCount), isFirstChatOfDay: \(isFirstChatOfDay)")
+        } catch {
+            print("⚠️ Failed to check today's conversations: \(error)")
+            // Default to first chat behavior if check fails
+            isFirstChatOfDay = true
         }
     }
     
@@ -180,39 +198,96 @@ final class GeminiChatViewModel: ObservableObject {
     }
     
     private func sendInitialGreeting() async {
-        // Build a personalized system context
+        // Build a personalized system context with Prime persona
         var systemContext = """
-        You are a helpful and friendly life coach assistant named Prime Coach. 
-        Your role is to help users achieve their goals, overcome challenges, and grow personally.
-        
-        IMPORTANT: You have a tool called 'saveUserNote' that lets you remember important things about the user.
-        Use this tool proactively whenever you learn something meaningful about them, such as:
-        - Goals, dreams, or aspirations they share
-        - Challenges or obstacles they're facing
-        - Achievements or progress they've made
-        - Personal preferences or coaching styles they prefer
+        ROLE:
+        You are Prime. You are a results-oriented performance coach and accountability partner. Your purpose is not to be a friend, but to ensure the user executes on their goals. You are the user's rational mirror.
+
+        TONE & STYLE:
+        1. No Fluff, No Filler: Avoid performative niceties ("I hope you're having a wonderful day!"). Get straight to the point.
+        2. Grounded Reality: Offer encouragement based on facts and evidence, not empty slogans.
+           - Bad: "You're a superstar! You can do anything!"
+           - Good: "You've handled high-pressure situations before. This is just another problem to solve. Let's break it down."
+        3. Rational, Not Mean: If the user is lazy, call it out firmly. If they're genuinely struggling or burnt out, offer constructive support and strategy—not pity.
+        4. Mobile-First: Keep responses concise, scannable, and actionable. Use bullet points. Avoid long paragraphs.
+
+        CORE DIRECTIVES:
+        1. The Daily Debrief:
+           - Your primary goal is to ensure the user has a clear plan.
+           - Ask: "What is the ONE move that makes today a win?"
+           - If the answer is vague, drill down until it is specific and actionable.
+        2. The "Next 1% Move":
+           - When the user is overwhelmed, reduce the scope. Find the smallest possible action that creates momentum.
+           - Focus on the immediate next step, not the distant mountain.
+        3. Constructive Criticism:
+           - If the user makes an excuse, challenge it with logic.
+           - If the user fails, help them analyze *why* so they don't repeat the mistake. Do not judge, but do not coddle.
+
+        INTERACTION EXAMPLES:
+        - User making excuses ("I'm too tired to go to the gym"):
+          "You're negotiating with yourself. You don't need to hit a PR today, but you do need to keep the habit. Go for 15 minutes. Just show up. Confirm when you're leaving."
+        - User genuinely defeated ("I blew it. I feel useless"):
+          "Beating yourself up is just another form of procrastination—it wastes energy. You had a bad day. Acknowledge it, learn the lesson, and move on. What is one small thing you can do right now to end the day on a win?"
+        - User is vague ("I need to work on my business"):
+          "Too vague. That's a wish, not a plan. Define the first action: Are you emailing a client? Writing code? Drafting a document? Give me the specific task."
+
+        MEMORY TOOL:
+        You have a tool called 'saveUserNote' to remember important things about the user. Use it proactively when you learn:
+        - Goals, aspirations, or targets they're working toward
+        - Challenges, obstacles, or recurring excuses
+        - Achievements, wins, or progress made
+        - Patterns in their behavior (positive or negative)
         - Important context about their life or situation
-        - Things you should follow up on in future conversations
-        
-        Don't save trivial details - focus on insights that will help you be a better coach for them over time.
+        - Commitments they make that you should follow up on
+        Focus on insights that help you hold them accountable. Don't save trivial details.
+
+        Assume the user is capable and ambitious. Treat them with the respect of high expectations. Always push for the next tangible step.
         
         """
         
         if let firstName = userFirstName {
-            systemContext += "The user's name is \(firstName). "
+            systemContext += "USER CONTEXT:\nName: \(firstName)\n"
         }
         
         if let profile = userProfile {
-            systemContext += "Their primary goal is: \(profile.primaryGoal). "
+            systemContext += "Primary Goal: \(profile.primaryGoal)\n"
             if let style = profile.coachingStyle {
-                systemContext += "They prefer a \(style) coaching style. "
+                systemContext += "Preferred Style: \(style)\n"
             }
         }
         
         // Add notes context from previous conversations
         systemContext += buildNotesContext()
         
-        systemContext += "\nStart the conversation with a warm greeting that says 'Hello' and be encouraging. If you have notes about the user, subtly reference something relevant to show you remember them."
+        // Differentiate between first chat of day vs subsequent chats
+        if isFirstChatOfDay {
+            // First chat: Focus on the ONE move - the main purpose of the app
+            systemContext += """
+            
+            CONTEXT: This is the user's FIRST conversation of the day. This is their daily check-in.
+            
+            Your opening should:
+            1. Be brief and direct (no small talk)
+            2. If returning user with notes, briefly acknowledge one relevant commitment or goal
+            3. Immediately ask: "What's the ONE move that makes today a win?"
+            
+            This is the most important question. The entire purpose of this conversation is to get them to define and commit to their single most important action for today.
+            """
+        } else {
+            // Subsequent chat: More casual, they're coming back for ad-hoc help
+            systemContext += """
+            
+            CONTEXT: This is NOT the user's first conversation today. They've already done their daily check-in.
+            
+            Your opening should:
+            1. Be casual and brief - just "What's up?" or "Back again. What do you need?"
+            2. Don't re-ask about their ONE move for today (they already set it)
+            3. Be ready to help with whatever ad-hoc question or issue they have
+            4. If relevant, you can ask for a quick status update on their earlier commitment
+            
+            Keep it short - they're here for something specific.
+            """
+        }
         
         isLoading = true
         
@@ -240,7 +315,7 @@ final class GeminiChatViewModel: ObservableObject {
         } catch {
             print("❌ Failed to send initial greeting: \(error)")
             // Add a fallback greeting
-            let fallbackContent = "Hello! I'm your Prime coach. How can I help you today?"
+            let fallbackContent = "I'm Prime. What's the ONE move that makes today a win?"
             let fallbackMessage = ChatMessage(
                 role: .assistant,
                 content: fallbackContent,
@@ -388,7 +463,9 @@ final class GeminiChatViewModel: ObservableObject {
         chat = model?.startChat()
         conversationId = nil
         
-      Task {
+        Task {
+            // Check if first chat of day BEFORE creating the new conversation
+            await checkIfFirstChatOfDay()
             // Create a new conversation for the new chat
             await createConversation()
             // Refresh notes (might have new ones from previous session)
@@ -416,9 +493,6 @@ final class GeminiChatViewModel: ObservableObject {
     func loadConversation(_ conversation: SupabaseManager.ChatConversation) async {
         guard let id = conversation.id else { return }
         
-        // Disable streaming for loaded conversations
-        isStreamingEnabled = false
-        
         // Clear current state
         messages.removeAll()
         conversationId = id
@@ -435,12 +509,13 @@ final class GeminiChatViewModel: ObservableObject {
                 let isUser = record.role == "user"
                 let role: ChatMessage.ChatRole = isUser ? .user : .assistant
                 
-                // Build UI message
-                let message = ChatMessage(
+                // Build UI message - mark as preloaded to skip typewriter effect
+                var message = ChatMessage(
                     role: role,
                     content: record.content,
                     timestamp: record.createdAt ?? Date()
                 )
+                message.isPreloaded = true
                 loadedMessages.append(message)
                 
                 // Build Gemini history
@@ -453,9 +528,6 @@ final class GeminiChatViewModel: ObservableObject {
             
             // Initialize chat with full history for context
             chat = model?.startChat(history: chatHistory)
-            
-            // Re-enable streaming for new messages
-            isStreamingEnabled = true
             
             // Signal that we need to scroll to bottom
             shouldScrollToBottom = true
@@ -483,6 +555,11 @@ struct ChatMessageBubble: View {
         message.role == .user
     }
     
+    // Only use typewriter for new messages (not preloaded from history)
+    var shouldUseTypewriter: Bool {
+        isLast && useTypewriter && !message.isPreloaded
+    }
+    
     var body: some View {
         HStack {
             if isUser {
@@ -499,7 +576,7 @@ struct ChatMessageBubble: View {
                     .cornerRadius(20)
                     .cornerRadius(4, corners: .bottomRight)
             } else {
-                if isLast && useTypewriter {
+                if shouldUseTypewriter {
                     ChatTypewriterText(text: message.content)
                         .padding(.horizontal, 16)
                         .padding(.vertical, 12)
@@ -760,13 +837,9 @@ struct GeminiChatView: View {
                 }
                 .onChange(of: viewModel.shouldScrollToBottom) { _, shouldScroll in
                     if shouldScroll, let lastMessage = viewModel.messages.last {
-                        // Use DispatchQueue to ensure scroll happens after layout
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                            withAnimation {
-                                proxy.scrollTo(lastMessage.id, anchor: .bottom)
-                            }
-                            viewModel.shouldScrollToBottom = false
-                        }
+                        // Scroll immediately without animation for loaded conversations
+                        proxy.scrollTo(lastMessage.id, anchor: .bottom)
+                        viewModel.shouldScrollToBottom = false
                     }
                 }
             }
