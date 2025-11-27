@@ -1,16 +1,6 @@
 {
   "images": [
     {
-      "filename": "darklogo.png",
-      "idiom": "universal"
-    },
-    {
-      "appearances": [
-        {
-          "appearance": "luminosity",
-          "value": "dark"
-        }
-      ],
       "filename": "regularlogo.svg",
       "idiom": "universal"
     }

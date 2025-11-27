@@ -46,14 +46,14 @@ struct SignInView: View {
           .opacity(0.7)
           .frame(maxWidth: .infinity) // Ensure centering horizontally
 
-        // Tagline
-        Text("Are you prime?")
-          .font(.system(size: 32, weight: .semibold))
-          .multilineTextAlignment(.center)
-          .foregroundStyle(Color(red: 0.6, green: 0.6, blue: 0.6)) // Light grey text
-          .padding(.horizontal, 20)
-          .padding(.top, -20) // Negative padding to pull it closer if needed, or just rely on spacing
-          .frame(maxWidth: .infinity) // Ensure centering horizontally
+        // // Tagline
+        // Text("Are you prime?")
+        //   .font(.system(size: 32, weight: .semibold))
+        //   .multilineTextAlignment(.center)
+        //   .foregroundStyle(Color(red: 0.6, green: 0.6, blue: 0.6)) // Light grey text
+        //   .padding(.horizontal, 20)
+        //   .padding(.top, -20) // Negative padding to pull it closer if needed, or just rely on spacing
+        //   .frame(maxWidth: .infinity) // Ensure centering horizontally
 
         Spacer()
 
