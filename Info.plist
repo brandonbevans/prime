@@ -6,16 +6,10 @@
 	<string>LaunchScreen</string>
 	<key>CFBundleIconName</key>
 	<string>AppIcon</string>
-	<key>ELEVENLABS_AGENT_ID</key>
-	<string>$(ELEVENLABS_AGENT_ID)</string>
-	<key>ELEVENLABS_API_KEY</key>
-	<string>$(ELEVENLABS_API_KEY)</string>
-	<key>ELEVENLABS_VOICE_ID</key>
-	<string>$(ELEVENLABS_VOICE_ID)</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>Prime needs access to your microphone to talk with your AI coach.</string>
+	<string>Prime uses your microphone to convert your speech to text when chatting with your AI coach.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
-	<string>Prime uses speech recognition to transcribe your goals.</string>
+	<string>Prime uses speech recognition to transcribe your voice into text messages.</string>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsArbitraryLoads</key>
@@ -25,13 +19,6 @@
 			<key>127.0.0.1</key>
 			<dict>
 				<key>NSExceptionAllowsInsecureHTTPLoads</key>
-				<true/>
-			</dict>
-			<key>192.168.50.17</key>
-			<dict>
-				<key>NSExceptionAllowsInsecureHTTPLoads</key>
-				<true/>
-				<key>NSIncludesSubdomains</key>
 				<true/>
 			</dict>
 			<key>localhost</key>
@@ -47,7 +34,6 @@
 	<string>$(SUPABASE_URL)</string>
 	<key>UIBackgroundModes</key>
 	<array>
-		<string>audio</string>
 		<string>fetch</string>
 		<string>remote-notification</string>
 	</array>

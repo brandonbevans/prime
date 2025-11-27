@@ -308,18 +308,26 @@ class SupabaseManager: ObservableObject {
   func fetchChatConversations(includeArchived: Bool = false) async throws -> [ChatConversation] {
     let userId = try await getCurrentUserId()
 
-    var query = client
-      .from("chat_conversations")
-      .select()
-      .eq("user_id", value: userId.uuidString)
-      .order("updated_at", ascending: false)
-
-    if !includeArchived {
-      query = query.eq("is_archived", value: false)
+    if includeArchived {
+      // Fetch all conversations including archived
+      let response: PostgrestResponse<[ChatConversation]> = try await client
+        .from("chat_conversations")
+        .select()
+        .eq("user_id", value: userId.uuidString)
+        .order("updated_at", ascending: false)
+        .execute()
+      return response.value
+    } else {
+      // Fetch only non-archived conversations
+      let response: PostgrestResponse<[ChatConversation]> = try await client
+        .from("chat_conversations")
+        .select()
+        .eq("user_id", value: userId.uuidString)
+        .eq("is_archived", value: false)
+        .order("updated_at", ascending: false)
+        .execute()
+      return response.value
     }
-
-    let response: PostgrestResponse<[ChatConversation]> = try await query.execute()
-    return response.value
   }
 
   /// Fetch messages for a specific conversation
@@ -391,15 +399,14 @@ class SupabaseManager: ObservableObject {
   func fetchUserNotes(categories: [String]? = nil) async throws -> [UserNote] {
     let userId = try await getCurrentUserId()
 
-    var query = client
+    let response: PostgrestResponse<[UserNote]> = try await client
       .from("user_notes")
       .select()
       .eq("user_id", value: userId.uuidString)
       .eq("is_active", value: true)
       .order("importance", ascending: false)
       .order("created_at", ascending: false)
-
-    let response: PostgrestResponse<[UserNote]> = try await query.execute()
+      .execute()
     
     // Filter by categories if specified
     if let categories = categories {
